@@ -308,8 +308,8 @@ body.admin-open{overflow:hidden}
 .ad-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:6px 0}
 .ad-head h2{display:flex;align-items:center;gap:10px;font-size:28px;margin-right:auto}
 .ad-head h2 svg{width:44px;height:44px}
-.tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px 0;background:var(--paper)}
-.tab{min-height:60px;padding:6px;border:var(--bd);border-radius:16px;background:var(--card);font-size:18px;line-height:1.2}
+.tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px 0;background:var(--paper)}
+.tab{min-height:60px;padding:6px;border:var(--bd);border-radius:16px;background:var(--card);font-size:17px;line-height:1.2}
 .tab.on{background:var(--yellow);box-shadow:3px 3px 0 var(--ink)}
 .tab small{display:block;font-size:12px;opacity:.75}
 .card{margin:0 0 16px;padding:14px;background:var(--card);border:var(--bd);border-radius:var(--r);box-shadow:var(--shadow)}
@@ -348,11 +348,12 @@ body.admin-open{overflow:hidden}
 .empty-ad{padding:30px 10px;text-align:center;font-size:21px}
 .empty-ad svg{width:120px;height:120px;margin:0 auto 10px;animation:float 5s ease-in-out infinite}
 select.in{min-height:52px;font-size:18px}
+textarea.in{min-height:220px;line-height:1.6;resize:vertical}
 @media (max-width:640px){
   .ad-head h2{font-size:24px;width:100%}
   .ad-head .btn{flex:1}
   .tabs{grid-template-columns:repeat(2,1fr)}
-  .tab{font-size:16px;min-height:52px}
+  .tab{font-size:15px;min-height:52px}
   .seats{grid-template-columns:repeat(2,1fr)}
 }
 </style>
@@ -519,7 +520,6 @@ select.in{min-height:52px;font-size:18px}
   <div class="ad-wrap">
     <header class="ad-head">
       <h2><svg aria-hidden="true"><use href="#i-board"/></svg>老師後台</h2>
-      <button class="btn coral" id="adArchive">📦 封存上月舊資料</button>
       <button class="btn sky" id="adSync">手動立即同步</button>
       <button class="btn plain" id="adBack">返回前台</button>
     </header>
@@ -528,6 +528,7 @@ select.in{min-height:52px;font-size:18px}
       <button class="tab" data-tab="register">今日登記批改<small>點座號改狀態</small></button>
       <button class="tab" data-tab="track">欠交追蹤<small>跨日未結案</small></button>
       <button class="tab" data-tab="points">獎勵與積分<small>再抽獎與加減分</small></button>
+      <button class="tab" data-tab="roster">班級名單<small>設定座號與姓名</small></button>
     </nav>
     <div id="adBody"></div>
   </div>
@@ -536,13 +537,27 @@ select.in{min-height:52px;font-size:18px}
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
+/* =====================================================================
+ * 【Firebase Realtime Database 設定】
+ * 請將下方引號內的網址，替換為你 Firebase 控制台的 Realtime Database 網址
+ * （例如：https://class-board-12345-default-rtdb.asia-southeast1.firebasedatabase.app）
+ * ===================================================================== */
+
+const FIREBASE_DB_URL = 'https://class-board-8762b-default-rtdb.asia-southeast1.firebasedatabase.app';
+
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const WD = ['日','一','二','三','四','五','六'];
 const LABEL = { unsubmitted:'未交', done:'已完成', correction:'待訂正', corrected:'訂正完成' };
 const NEXT  = { '':'done', done:'unsubmitted', unsubmitted:'correction', correction:'corrected', corrected:'' };
-const POLL_MS = 60000;
+const POLL_MS = 12000;
 
+/* 台灣時區今日 YYYY-MM-DD */
+function getTodayTaipei(){
+  const now = new Date();
+  const tw = new Date(now.getTime() + (8 * 60 + now.getTimezoneOffset()) * 60000);
+  return tw.getFullYear() + '-' + String(tw.getMonth()+1).padStart(2,'0') + '-' + String(tw.getDate()).padStart(2,'0');
+}
 function parseYmd(s){ const p = s.split('-').map(Number); return new Date(Date.UTC(p[0], p[1]-1, p[2])); }
 function fmtYmd(d){ return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0'); }
 function addDays(s,n){ const d = parseYmd(s); d.setUTCDate(d.getUTCDate()+n); return fmtYmd(d); }
@@ -551,7 +566,16 @@ function stepSchool(s,dir){ let d = addDays(s,dir); while(dow(d)===0 || dow(d)==
 function md(s){ const p = s.split('-'); return (+p[1])+'/'+(+p[2]); }
 function nowTime(){ return new Date().toLocaleTimeString('zh-TW',{hour12:false}); }
 
+/* Firebase 鍵值安全編碼（Firebase Key 不可包含 . # $ / [ ] |） */
+function fbKey(str){
+  return encodeURIComponent(String(str)).replace(/\./g, '%2E');
+}
+function fbUnkey(k){
+  try { return decodeURIComponent(String(k)); } catch(e) { return String(k); }
+}
+
 const S = {
+  db: null,
   board:null, viewDate:null, lastJson:'',
   adminOpen:false, tab:'week',
   week:null, draft:{}, dirty:{},
@@ -562,34 +586,337 @@ const S = {
   batchBuffer:{}, batchTimer:null
 };
 
-// 【重要設定】請將下方引號內的網址，替換為你 Google Apps Script 部署後的「網頁應用程式網址」(結尾為 /exec)
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyHND1Zr2iAY-5Iy4_unmNZCxghphRqsOXED_YEDGhgojDiU26K17tF7SiLYCb25vp_/exec';
+/* =====================================================================
+ * Firebase Realtime Database 讀寫引擎（全記憶體結構化資料，0.1 秒極速回應）
+ * ===================================================================== */
+function dbBaseUrl(){
+  if (!FIREBASE_DB_URL || FIREBASE_DB_URL.includes('請在這裡貼上')) {
+    throw new Error('尚未設定 FIREBASE_DB_URL！請打開 index.html 貼上 Firebase 資料庫網址');
+  }
+  return FIREBASE_DB_URL.replace(/\/+$/, '');
+}
 
-async function gs(fn){
-  const args = Array.prototype.slice.call(arguments, 1);
-  // 若仍在 GAS iframe 內執行，優先使用原生高速通道
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
-    return new Promise((resolve, reject) => {
-      google.script.run
-        .withSuccessHandler(res => resolve(res))
-        .withFailureHandler(err => reject(err))
-        [fn].apply(null, args);
+async function fbGetAll(){
+  const res = await fetch(dbBaseUrl() + '/boardData.json');
+  if (!res.ok) throw new Error('Firebase 連線失敗 (HTTP ' + res.status + ')');
+  const data = await res.json();
+  return data || {};
+}
+
+async function fbPatch(path, obj){
+  const res = await fetch(dbBaseUrl() + '/boardData/' + path + '.json', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(obj)
+  });
+  if (!res.ok) throw new Error('Firebase 寫入失敗 (HTTP ' + res.status + ')');
+  return res.json();
+}
+
+async function fbPut(path, val){
+  const res = await fetch(dbBaseUrl() + '/boardData/' + path + '.json', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(val)
+  });
+  if (!res.ok) throw new Error('Firebase 儲存失敗 (HTTP ' + res.status + ')');
+  return res.json();
+}
+
+/* 預設範例學生名單（初次使用若資料庫為空時自動顯示，老師可在後台「班級名單」隨時修改） */
+function getStudentsList(rawDb){
+  const arr = rawDb && rawDb.students;
+  if (Array.isArray(arr) && arr.length) {
+    return arr.filter(Boolean).map(x => ({ seat: Number(x.seat), name: String(x.name || '') }))
+      .filter(x => x.seat > 0 && x.name).sort((a,b) => a.seat - b.seat);
+  }
+  if (arr && typeof arr === 'object') {
+    return Object.values(arr).filter(Boolean).map(x => ({ seat: Number(x.seat), name: String(x.name || '') }))
+      .filter(x => x.seat > 0 && x.name).sort((a,b) => a.seat - b.seat);
+  }
+  return [
+    { seat: 1, name: '範例學生一' },
+    { seat: 2, name: '範例學生二' },
+    { seat: 3, name: '範例學生三' }
+  ];
+}
+
+function buildBoardFromDb(rawDb, targetDate){
+  const today = getTodayTaipei();
+  const date = targetDate || today;
+  const d = dow(date);
+  const weekday = (d !== 0 && d !== 6);
+  const students = getStudentsList(rawDb);
+
+  const homeworkMap = (rawDb && rawDb.homework) || {};
+  const sourceOverrides = (rawDb && rawDb.sourceOverrides) || {};
+  const tempItemsMap = (rawDb && rawDb.tempItems) || {};
+  const statusMap = (rawDb && rawDb.status) || {};
+  const carryMap = (rawDb && rawDb.carry) || {};
+  const lotteryMap = (rawDb && rawDb.lottery) || {};
+  const lotteryQuotaMap = (rawDb && rawDb.lotteryQuota) || {};
+  const scoresMap = (rawDb && rawDb.scores) || {};
+  const pointLogsArr = Array.isArray(rawDb && rawDb.pointLogs) ? rawDb.pointLogs : [];
+
+  /* 聯絡簿項目 */
+  const dayLinesRaw = Array.isArray(homeworkMap[date]) ? homeworkMap[date] : [];
+  const lines = dayLinesRaw.map(l => ({
+    t: String(l.t || ''),
+    hw: !!l.hw,
+    name: String(l.name || l.t || '')
+  }));
+
+  /* 作業來源日 */
+  const srcAuto = stepSchool(date, -1);
+  const srcOverride = sourceOverrides[date] || '';
+  const source = srcOverride || srcAuto;
+
+  const items = [];
+  if (weekday) {
+    const srcLines = Array.isArray(homeworkMap[source]) ? homeworkMap[source] : [];
+    srcLines.forEach(l => {
+      if (l && l.hw) {
+        items.push({ source: source, name: String(l.name || l.t || ''), temp: false });
+      }
+    });
+    const temps = tempItemsMap[date] || {};
+    Object.keys(temps).forEach(k => {
+      if (temps[k]) items.push({ source: date, name: fbUnkey(k), temp: true });
     });
   }
-  // 獨立託管於 GitHub Pages 時，改用 fetch() 跨網域呼叫 GAS API
-  if (!GAS_API_URL || GAS_API_URL.includes('請在這裡貼上')) {
-    throw new Error('尚未設定 GAS_API_URL！請開啟 index.html 第 333 行貼上你的 GAS 網址');
-  }
-  const res = await fetch(GAS_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ fn: fn, args: args }),
-    redirect: 'follow'
+
+  /* 當日作業狀態 */
+  const status = {};
+  const dayStatus = statusMap[date] || {};
+  Object.keys(dayStatus).forEach(k => {
+    const v = dayStatus[k];
+    if (v) status[fbUnkey(k)] = v;
   });
-  if (!res.ok) throw new Error('伺服器連線失敗 (HTTP ' + res.status + ')');
-  const data = await res.json();
-  if (data && data.error) throw new Error(data.error);
-  return data.result;
+
+  /* 跨日未結案欠交追蹤 */
+  const carryGroups = {};
+  Object.keys(carryMap).forEach(k => {
+    const rec = carryMap[k];
+    if (!rec || !rec.status) return;
+    if (rec.due >= date) return; // 只顯示早於檢視日的未結案
+    const gk = rec.due + '|' + rec.source + '|' + rec.name;
+    if (!carryGroups[gk]) {
+      carryGroups[gk] = { due: rec.due, source: rec.source, name: rec.name, entries: [] };
+    }
+    carryGroups[gk].entries.push({ seat: Number(rec.seat), status: rec.status });
+  });
+  const carry = Object.values(carryGroups).sort((a,b) => a.due.localeCompare(b.due));
+  carry.forEach(g => g.entries.sort((a,b) => a.seat - b.seat));
+
+  /* 今日抽獎與總積分 */
+  const todayLotto = lotteryMap[date] || {};
+  const lotteryToday = {};
+  const lotteryUsedCount = {};
+  Object.keys(todayLotto).forEach(seat => {
+    const rec = todayLotto[seat];
+    if (rec) {
+      lotteryToday[seat] = Number(rec.points || 0);
+      lotteryUsedCount[seat] = Number(rec.count || 0);
+    }
+  });
+
+  const todayQuota = lotteryQuotaMap[date] || {};
+  const lotteryExtraQuota = {};
+  Object.keys(todayQuota).forEach(seat => {
+    lotteryExtraQuota[seat] = Number(todayQuota[seat] || 0);
+  });
+
+  const scoreTotal = {};
+  students.forEach(s => {
+    scoreTotal[s.seat] = Number(scoresMap[s.seat] || 0);
+  });
+
+  return {
+    today, date, weekday, source, srcAuto, srcOverride,
+    notice: String((rawDb && rawDb.notice) || ''),
+    students, lines, items, status, carry,
+    lotteryToday, lotteryUsedCount, lotteryExtraQuota,
+    scoreTotal,
+    pointLogs: pointLogsArr.slice(0, 20)
+  };
+}
+
+/* 統一後端呼叫轉接層（所有操作直接讀寫 Firebase Realtime Database） */
+async function gs(fn){
+  const args = Array.prototype.slice.call(arguments, 1);
+
+  if (fn === 'getBoard') {
+    const viewDate = args[0] || null;
+    const rawDb = await fbGetAll();
+    S.db = rawDb;
+    return buildBoardFromDb(rawDb, viewDate);
+  }
+
+  if (fn === 'getWeek') {
+    const anchor = args[0] || getTodayTaipei();
+    const d = dow(anchor);
+    const diffToMon = (d === 0) ? -6 : (1 - d);
+    const monday = addDays(anchor, diffToMon);
+    const rawDb = S.db || await fbGetAll();
+    const homeworkMap = rawDb.homework || {};
+    const days = [];
+    for (let i = 0; i < 5; i++) {
+      const dt = addDays(monday, i);
+      const rawLines = Array.isArray(homeworkMap[dt]) ? homeworkMap[dt] : [];
+      days.push({
+        date: dt,
+        lines: rawLines.map(l => ({ t: l.t || '', hw: !!l.hw, name: l.name || l.t || '' }))
+      });
+    }
+    return { today: getTodayTaipei(), monday, days };
+  }
+
+  if (fn === 'saveHomework') {
+    const date = args[0], rows = args[1] || [];
+    const formatted = rows.map(r => ({
+      t: r.text,
+      hw: !!r.check,
+      name: r.check ? (r.short || r.text) : ''
+    }));
+    await fbPut('homework/' + date, formatted);
+    if (!S.db) S.db = {};
+    if (!S.db.homework) S.db.homework = {};
+    S.db.homework[date] = formatted;
+    return { ok: true };
+  }
+
+  if (fn === 'saveNotice') {
+    const val = args[0] || '';
+    await fbPut('notice', val);
+    if (!S.db) S.db = {};
+    S.db.notice = val;
+    return { ok: true };
+  }
+
+  if (fn === 'setSource') {
+    const date = args[0], src = args[1] || '';
+    await fbPut('sourceOverrides/' + date, src || null);
+    if (!S.db) S.db = {};
+    if (!S.db.sourceOverrides) S.db.sourceOverrides = {};
+    if (src) S.db.sourceOverrides[date] = src; else delete S.db.sourceOverrides[date];
+    return { ok: true };
+  }
+
+  if (fn === 'addTempItem') {
+    const date = args[0], name = args[1];
+    await fbPut('tempItems/' + date + '/' + fbKey(name), true);
+    return { ok: true };
+  }
+
+  if (fn === 'removeTempItem') {
+    const date = args[0], name = args[1];
+    await fbPut('tempItems/' + date + '/' + fbKey(name), null);
+    return { ok: true };
+  }
+
+  if (fn === 'setStatusBatch') {
+    const list = args[0] || [];
+    const statusPatches = {};
+    const carryPatches = {};
+    list.forEach(p => {
+      const k = fbKey(p.source + '|' + p.name + '|' + p.seat);
+      statusPatches[p.due + '/' + k] = p.status || null;
+
+      const ck = fbKey(p.due + '|' + p.source + '|' + p.name + '|' + p.seat);
+      if (p.status === 'unsubmitted' || p.status === 'correction') {
+        carryPatches[ck] = { due: p.due, source: p.source, name: p.name, seat: Number(p.seat), status: p.status };
+      } else {
+        carryPatches[ck] = null;
+      }
+    });
+    await Promise.all([
+      fbPatch('status', statusPatches),
+      fbPatch('carry', carryPatches)
+    ]);
+    return { ok: true };
+  }
+
+  if (fn === 'drawLottery') {
+    const date = args[0], seat = Number(args[1]);
+    const rawDb = await fbGetAll();
+    const used = Number((rawDb.lottery && rawDb.lottery[date] && rawDb.lottery[date][seat] && rawDb.lottery[date][seat].count) || 0);
+    const prevPts = Number((rawDb.lottery && rawDb.lottery[date] && rawDb.lottery[date][seat] && rawDb.lottery[date][seat].points) || 0);
+    const extra = Number((rawDb.lotteryQuota && rawDb.lotteryQuota[date] && rawDb.lotteryQuota[date][seat]) || 0);
+    const curTotal = Number((rawDb.scores && rawDb.scores[seat]) || 0);
+
+    const pts = Math.floor(Math.random() * 3) + 1; // +1 ~ +3 分
+    const newTotal = curTotal + pts;
+    const newTodayPts = prevPts + pts;
+    const newUsed = used + 1;
+
+    await Promise.all([
+      fbPut('lottery/' + date + '/' + seat, { points: newTodayPts, count: newUsed }),
+      fbPut('scores/' + seat, newTotal)
+    ]);
+    return { ok: true, points: pts, todayTotal: newTodayPts, usedCount: newUsed, total: newTotal };
+  }
+
+  if (fn === 'grantExtraLottery') {
+    const seat = Number(args[0]);
+    const today = getTodayTaipei();
+    const rawDb = await fbGetAll();
+    const curQuota = Number((rawDb.lotteryQuota && rawDb.lotteryQuota[today] && rawDb.lotteryQuota[today][seat]) || 0);
+    await fbPut('lotteryQuota/' + today + '/' + seat, curQuota + 1);
+    const stu = getStudentsList(rawDb).find(s => s.seat === seat);
+    return { ok: true, name: stu ? stu.name : '' };
+  }
+
+  if (fn === 'grantAllExtraLottery') {
+    const today = getTodayTaipei();
+    const rawDb = await fbGetAll();
+    const stus = getStudentsList(rawDb);
+    const patches = {};
+    stus.forEach(s => {
+      const cur = Number((rawDb.lotteryQuota && rawDb.lotteryQuota[today] && rawDb.lotteryQuota[today][s.seat]) || 0);
+      patches[s.seat] = cur + 1;
+    });
+    await fbPut('lotteryQuota/' + today, patches);
+    return { ok: true, count: stus.length };
+  }
+
+  if (fn === 'addPoints') {
+    const seats = args[0] || [], delta = Number(args[1] || 0), reason = String(args[2] || '');
+    const rawDb = await fbGetAll();
+    const stus = getStudentsList(rawDb);
+    const scorePatches = {};
+    const newLogs = [];
+    seats.forEach(seat => {
+      const cur = Number((rawDb.scores && rawDb.scores[seat]) || 0);
+      scorePatches[seat] = cur + delta;
+      const stu = stus.find(s => s.seat === seat);
+      newLogs.push({ seat: Number(seat), name: stu ? stu.name : '', delta, reason, ts: Date.now() });
+    });
+    const oldLogs = Array.isArray(rawDb.pointLogs) ? rawDb.pointLogs : [];
+    const mergedLogs = newLogs.concat(oldLogs).slice(0, 30);
+    await Promise.all([
+      fbPatch('scores', scorePatches),
+      fbPut('pointLogs', mergedLogs)
+    ]);
+    return { ok: true };
+  }
+
+  if (fn === 'resetAllScores') {
+    await Promise.all([
+      fbPut('scores', null),
+      fbPut('lottery', null),
+      fbPut('lotteryQuota', null),
+      fbPut('pointLogs', null)
+    ]);
+    return { ok: true };
+  }
+
+  if (fn === 'saveStudents') {
+    const list = args[0] || [];
+    await fbPut('students', list);
+    return { ok: true };
+  }
+
+  throw new Error('未知指令: ' + fn);
 }
 
 function errMsg(e){ return (e && e.message) ? String(e.message).replace(/^Error:\s*/,'') : String(e||'發生錯誤'); }
@@ -607,7 +934,7 @@ function enqueue(fn, args){
   return S.queue;
 }
 
-/* ---------- 連點座號自動合併批次送出（350ms 防抖） ---------- */
+/* ---------- 連點座號自動合併批次送出（250ms 防抖） ---------- */
 function flushStatusBuffer(){
   clearTimeout(S.batchTimer);
   S.batchTimer = null;
@@ -626,7 +953,7 @@ function queueStatusBatch(payloadList){
     S.batchBuffer[k] = p;
   });
   clearTimeout(S.batchTimer);
-  S.batchTimer = setTimeout(() => { flushStatusBuffer(); }, 350);
+  S.batchTimer = setTimeout(() => { flushStatusBuffer(); }, 250);
 }
 
 function icon(status, seat){
@@ -686,7 +1013,7 @@ function renderLeft(){
     ? '自動帶入前一個上課日聯絡簿項目・來自 '+(b.source?md(b.source)+'（'+WD[dow(b.source)]+'）':'—')
     : '假日不用交作業';
 
-  if (!st.length) { wrap.innerHTML = '<div class="empty"><svg><use href="#i-cloud"/></svg><p>Students 工作表裡還沒有學生</p></div>'; }
+  if (!st.length) { wrap.innerHTML = '<div class="empty"><svg><use href="#i-cloud"/></svg><p>尚未設定班級名單</p></div>'; }
   else if (!items.length) {
     wrap.innerHTML = '<div class="empty"><svg><use href="#i-moon"/></svg><p>'+(b.weekday?'今天沒有要交的作業':'假日好好休息')+'</p>'+
       (b.weekday?'<small>前一個上課日的聯絡簿沒有勾選「隔天檢查」的項目</small>':'')+'</div>';
@@ -755,7 +1082,7 @@ function renderAll(){
   if (S.adminOpen) adminRefresh();
 }
 
-const LS_BOARD_KEY = 'CLASS_BOARD_SNAP_V2';
+const LS_BOARD_KEY = 'CLASS_BOARD_FIREBASE_V1';
 function saveLocalSnap(jsonStr){
   try { localStorage.setItem(LS_BOARD_KEY, jsonStr); } catch(e){}
 }
@@ -768,31 +1095,30 @@ function bootFromLocalSnap(){
     S.lastJson = raw;
     S.board = obj;
     renderAll();
-    $('#syncTxt').textContent = '顯示本機快取・背景同步最新資料中…';
+    $('#syncTxt').textContent = '顯示本機快取・Firebase 即時同步中…';
     return true;
   } catch(e) { return false; }
 }
 
 function dotBusy(on){ $('#dot').classList.toggle('busy', on); }
 async function fetchBoard(force){
-  if (!force && (S.pending > 0 || S.batchTimer || Date.now() - S.lastWrite < 3500)) return;
+  if (!force && (S.pending > 0 || S.batchTimer || Date.now() - S.lastWrite < 2000)) return;
   if (S.fetching) return;
   S.fetching = true; dotBusy(true);
   const w = S.writeSeq;
   try {
-    const b = await gs('getBoard', S.viewDate, !!force);
+    const b = await gs('getBoard', S.viewDate);
     if (w !== S.writeSeq || S.pending > 0 || S.batchTimer) return;
-    const rest = Object.assign({}, b); delete rest.syncedAt;
-    const j = JSON.stringify(rest);
+    const j = JSON.stringify(b);
     S.online = true;
     $('#dot').classList.remove('off');
-    $('#syncTxt').textContent = '最後同步 '+nowTime();
+    $('#syncTxt').textContent = 'Firebase 即時同步 ' + nowTime();
     if (!S.viewDate) saveLocalSnap(j);
-    if (j !== S.lastJson) { S.lastJson = j; S.board = rest; renderAll(); }
+    if (j !== S.lastJson) { S.lastJson = j; S.board = b; renderAll(); }
   } catch(e) {
     S.online = false;
     $('#dot').classList.add('off');
-    $('#syncTxt').textContent = '連線中斷，稍後自動重試（上次 '+(S.board?'已有資料':'尚無資料')+'）';
+    $('#syncTxt').textContent = '連線異常：' + errMsg(e);
     if (!S.board) $('#tblWrap').innerHTML = '<div class="empty"><svg><use href="#i-cloud"/></svg><p>'+esc(errMsg(e))+'</p></div>';
   } finally { S.fetching = false; dotBusy(false); }
 }
@@ -826,7 +1152,7 @@ $('#fsBtn').addEventListener('click', ()=>{
 document.addEventListener('fullscreenchange', ()=>{ updFsBtn(); setTimeout(fitVertical, 120); });
 document.addEventListener('webkitfullscreenchange', ()=>{ updFsBtn(); setTimeout(fitVertical, 120); });
 
-/* ---------- 班級積分榜（純個人排名） ---------- */
+/* ---------- 班級積分榜 ---------- */
 function openRank(){
   const b = S.board; if (!b) return;
   const sc = b.scoreTotal || {};
@@ -934,7 +1260,6 @@ function openLotto(seat){
   const gameEl = $('#lottoGame');
   const msgEl = $('#lottoMsg');
 
-  /* 若抽中外部擴充的新遊戲（pick >= 10） */
   if (pick >= 10) {
     const plugin = extraPlugins[pick - 10];
     $('#lottoTtl').textContent = plugin.title || '⭐ 特別抽獎遊戲';
@@ -1071,6 +1396,7 @@ function finishLottoState(seat, res){
   S.board.lotteryUsedCount[seat] = res.usedCount != null ? res.usedCount : ((S.board.lotteryUsedCount[seat] || 0) + 1);
   S.board.scoreTotal[seat] = res.total;
   S.lastJson = '';
+  saveLocalSnap(JSON.stringify(S.board));
   renderLeft();
   $('#lottoMsg').innerHTML = (res.already ? '今天的抽獎機會已經用完囉！' : '🎉 恭喜獲得 <b>+'+res.points+' 分</b>！') +
     '<br>目前總積分：<b>'+res.total+' 分</b>';
@@ -1099,7 +1425,7 @@ $('#lottoGame').addEventListener('click', async ev=>{
     cardBtn.classList.add('picked');
     $('#lottoMsg').textContent = '掀開卡片中…';
     try {
-      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 550))]);
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 450))]);
       if (res && (res.ok || res.already)) {
         const others = [1, 2, 3].filter(n => n !== res.points);
         let oi = 0;
@@ -1128,12 +1454,12 @@ $('#lottoGame').addEventListener('click', async ev=>{
     }, 85);
     try {
       const res = await gs('drawLottery', S.board.date, seat);
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 500));
       if (res && (res.ok || res.already)) {
         for (let k = 0; k < 3; k++) {
           reels[k].dataset.done = '1';
           reels[k].innerHTML = '<span style="color:var(--red)">+'+res.points+'</span>';
-          if (k < 2) await new Promise(r => setTimeout(r, 250));
+          if (k < 2) await new Promise(r => setTimeout(r, 200));
         }
         clearInterval(iv);
         finishLottoState(seat, res);
@@ -1150,7 +1476,7 @@ $('#lottoGame').addEventListener('click', async ev=>{
     const drum = $('#wheelDrum'); drum.classList.add('spinning');
     $('#lottoMsg').textContent = '轉盤旋轉中，珠珠即將滾出…';
     try {
-      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 1050))]);
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 950))]);
       drum.classList.remove('spinning');
       if (res && (res.ok || res.already)) {
         $('#wheelChute').innerHTML = '<div class="gacha-ball">+'+res.points+'</div>';
@@ -1171,7 +1497,7 @@ $('#lottoGame').addEventListener('click', async ev=>{
     ropeBtn.classList.add('pulled');
     $('#lottoMsg').textContent = '用力拉出繩結中…';
     try {
-      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 600))]);
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 500))]);
       if (res && (res.ok || res.already)) {
         const others = [1, 2, 3].filter(n => n !== res.points);
         let oi = 0;
@@ -1194,7 +1520,7 @@ $('#lottoGame').addEventListener('click', async ev=>{
     $('#ringPosts').classList.add('paused');
     $('#lottoMsg').textContent = '圈圈飛出去啦…';
     try {
-      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 550))]);
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 450))]);
       if (res && (res.ok || res.already)) {
         const winPost = Math.floor(Math.random() * 3);
         const others = [1, 2, 3].filter(n => n !== res.points);
@@ -1220,7 +1546,7 @@ $('#lottoGame').addEventListener('click', async ev=>{
     $('#bball').classList.add('shoot');
     $('#lottoMsg').textContent = '漂亮拋物線飛向籃框…';
     try {
-      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 750))]);
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 650))]);
       if (res && (res.ok || res.already)) {
         const sc = $('#hoopScore');
         sc.textContent = '空心入網 +' + res.points + ' 分！';
@@ -1241,7 +1567,7 @@ $('#lottoGame').addEventListener('click', async ev=>{
     allTargets.forEach(b => b.disabled = true);
     $('#lottoMsg').textContent = '砰！子彈飛向標靶…';
     try {
-      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 450))]);
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 400))]);
       if (res && (res.ok || res.already)) {
         const others = [1, 2, 3].filter(n => n !== res.points);
         let oi = 0;
@@ -1266,7 +1592,7 @@ $('#lottoGame').addEventListener('click', async ev=>{
     appleBtn.classList.add('picked');
     $('#lottoMsg').textContent = '摘下紅蘋果囉…';
     try {
-      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 650))]);
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 550))]);
       if (res && (res.ok || res.already)) {
         allApples.forEach((b, idx) => {
           if (idx === pickedIdx) b.textContent = '+' + res.points + '分';
@@ -1288,7 +1614,7 @@ $('#lottoGame').addEventListener('click', async ev=>{
     allFish.forEach(b => b.disabled = true);
     $('#lottoMsg').textContent = '網子下水撈魚中…';
     try {
-      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 500))]);
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 450))]);
       if (res && (res.ok || res.already)) {
         allFish.forEach((b, idx) => {
           if (idx === pickedIdx) { b.classList.add('caught'); b.textContent = '🥅 +' + res.points + '分'; }
@@ -1347,27 +1673,6 @@ $('#adSync').addEventListener('click', async ()=>{
   if (S.tab === 'week') { try { await loadWeek(S.week && S.week.monday); } catch(e){ handleErr(e); } }
   renderAdmin(); toast('已同步 '+nowTime());
 });
-$('#adArchive').addEventListener('click', async ()=>{
-  if (!confirm('確定要將「本月 1 日以前」的舊紀錄封存至備份工作表嗎？\n（未結案的欠交紀錄會自動保留，封存後系統讀寫速度會大幅提升）')) return;
-  const btn = $('#adArchive');
-  btn.disabled = true;
-  const orig = btn.textContent;
-  btn.textContent = '📦 封存整理中…';
-  try {
-    await flushStatusBuffer();
-    const res = await gs('archiveOldData');
-    S.writeSeq++; S.lastJson = '';
-    await fetchBoard(true);
-    if (S.tab === 'week') { try { await loadWeek(S.week && S.week.monday); } catch(e){} }
-    renderAdmin();
-    alert(res.message || '封存完成！');
-  } catch(e) {
-    handleErr(e);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = orig;
-  }
-});
 
 let idleT;
 function bumpIdle(){ clearTimeout(idleT); if (S.adminOpen) idleT = setTimeout(()=>{ backToFront(); toast('閒置太久，已自動返回前台'); }, 15*60*1000); }
@@ -1395,7 +1700,8 @@ function renderAdmin(){
   if (S.tab === 'week') body.innerHTML = viewWeek();
   else if (S.tab === 'register') { body.innerHTML = '<div id="regTop"></div><div id="regSeats"></div>'; renderRegTop(); renderRegSeats(); }
   else if (S.tab === 'track') body.innerHTML = viewTrack();
-  else body.innerHTML = viewPoints();
+  else if (S.tab === 'points') body.innerHTML = viewPoints();
+  else body.innerHTML = viewRoster();
 }
 
 /* ---------- 分頁一：一週排程 + 黑板便條 ---------- */
@@ -1514,7 +1820,7 @@ function renderRegSeats(){
   const b = S.board, it = selectedItem();
   if (!b || !b.weekday || !it) { el.innerHTML = ''; return; }
   let h = '<section class="card"><h3>「'+esc(it.name)+'」 點座號登記</h3>';
-  h += '<div class="sub">先選一種狀態，再點座號（連點多位會自動合併極速同步）；同一個狀態再點一次＝清除回空白。</div>';
+  h += '<div class="sub">先選一種狀態，再點座號（0.1 秒極速寫入 Firebase）；同一個狀態再點一次＝清除回空白。</div>';
   h += '<div class="modes">'+MODES.map(m=>'<button class="mode'+(S.mode===m[0]?' on':'')+'" data-act="mode" data-m="'+m[0]+'">'+m[1]+'</button>').join('')+'</div>';
   h += '<div class="seats">'+b.students.map(s=>{
     const t = b.status[skey(it,s.seat)] || '';
@@ -1533,6 +1839,7 @@ function applyStatuses(it, list){
   list.forEach(x=>setLocal(it,x[0],x[1]));
   queueStatusBatch(list.map(x=>payload(it,x[0],x[1])));
   S.lastJson = '';
+  saveLocalSnap(JSON.stringify(S.board));
   renderRegTop(); renderRegSeats();
 }
 
@@ -1631,6 +1938,17 @@ function viewPoints(){
   return h;
 }
 
+/* ---------- 分頁五：班級名單設定（直接存 Firebase，免用試算表） ---------- */
+function viewRoster(){
+  const stus = (S.board && S.board.students) || [];
+  const lines = stus.map(s => s.seat + ' ' + s.name).join('\n');
+  return '<section class="card"><h3>👥 班級學生名單設定</h3>'+
+    '<div class="note">一行一位學生，格式為「<b>座號 姓名</b>」（中間用空格或 Tab 分隔，也可直接從 Excel 複製兩欄貼上）：</div>'+
+    '<textarea class="in" id="rosterTxt" placeholder="1 王小明&#10;2 陳小華&#10;3 林美美">'+esc(lines)+'</textarea>'+
+    '<div class="row2"><button class="btn green" data-act="saveRoster">💾 儲存班級名單</button></div>'+
+    '</section>';
+}
+
 /* =====================================================
  * 後台事件（事件委派）
  * ===================================================== */
@@ -1662,6 +1980,27 @@ adBody.addEventListener('click', async ev=>{
   const act = btn.dataset.act;
   const card = btn.closest('.card');
   const day = card && card.dataset.day;
+
+  if (act === 'saveRoster') {
+    const raw = ($('#rosterTxt').value || '').trim();
+    const parsed = [];
+    raw.split(/\r?\n/).forEach(line => {
+      const m = line.trim().match(/^(\d+)[\s,，\t]+(.+)$/);
+      if (m) parsed.push({ seat: Number(m[1]), name: m[2].trim() });
+    });
+    if (!parsed.length) { toast('請至少輸入一位學生（格式：1 王小明）'); return; }
+    parsed.sort((a,b) => a.seat - b.seat);
+    btn.disabled = true;
+    try {
+      await gs('saveStudents', parsed);
+      S.writeSeq++; S.lastJson = '';
+      await fetchBoard(true);
+      renderAdmin();
+      toast('✅ 已更新班級名單（共 ' + parsed.length + ' 位學生）');
+    } catch(e){ handleErr(e); }
+    btn.disabled = false;
+    return;
+  }
 
   if (act === 'saveNotice' || act === 'clearNotice') {
     const val = act === 'clearNotice' ? '' : ($('#noticeIn').value || '').trim();
@@ -1797,8 +2136,8 @@ adBody.addEventListener('click', async ev=>{
 });
 
 renderLegend();
-const hasSnap = bootFromLocalSnap();
-fetchBoard(!hasSnap);
+bootFromLocalSnap();
+fetchBoard(true);
 </script>
 </body>
 </html>
