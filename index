@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="教室聯絡簿">
+<title>教室聯絡簿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+<script>
+/* =====================================================================
+ * 【外掛擴充模組設定】
+ * ===================================================================== */
+const PLUGIN_URL = 'https://raw.githubusercontent.com/hs12195/class-board-plugins/main/lotto-plugins.js';
+window.LOTTO_PLUGINS = [];
+if (PLUGIN_URL) {
+  fetch(PLUGIN_URL)
+    .then(res => {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.text();
+    })
+    .then(code => {
+      (new Function(code))();
+      console.log('✅ 外部遊戲載入成功，共', window.LOTTO_PLUGINS.length, '款');
+    })
+    .catch(err => console.log('無外部擴充模組，使用內建模式', err));
+}
+</script>
+<style>
+:root{
+  --paper:#FFFCF6; --card:#FFFEFA; --ink:#3E3A39;
+  --coral:#F2A497; --yellow:#F6D27A; --sky:#A8D3E6; --green:#B9DAA5;
+  --red:#D9453D; --navy:#14456A; --tickgreen:#6DB04F;
+  --bd:3px solid var(--ink); --r:20px; --shadow:4px 4px 0 var(--ink);
+  --font:'Huninn','jf-openhuninn','Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font-family:var(--font)}
+body{overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+h1,h2,h3,p{margin:0}
+svg{display:block}
+
+/* ---------- 動畫 ---------- */
+@keyframes float{0%,100%{transform:translateY(0) rotate(var(--rot,0deg))}50%{transform:translateY(-7px) rotate(calc(var(--rot,0deg) + 5deg))}}
+@keyframes pop{0%{transform:scale(.55)}55%{transform:scale(1.2)}100%{transform:scale(1)}}
+@keyframes pulse{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}
+@keyframes twinkle{0%,100%{transform:scale(1) rotate(-6deg)}50%{transform:scale(1.18) rotate(8deg)}}
+@keyframes spinDrum{0%{transform:rotate(0deg)}100%{transform:rotate(1080deg)}}
+@keyframes ballDrop{0%{transform:translateY(-35px) scale(.4);opacity:0}65%{transform:translateY(4px) scale(1.15);opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes ropePull{0%{transform:translateY(0)}45%{transform:translateY(22px)}100%{transform:translateY(8px)}}
+@keyframes swayPosts{0%,100%{transform:translateX(-14px)}50%{transform:translateX(14px)}}
+@keyframes shootBasket{0%{transform:translate(0,0) scale(1)}50%{transform:translate(0,-115px) scale(.82)}85%{transform:translate(0,-88px) scale(.75)}100%{transform:translate(0,-65px) scale(.75);opacity:0}}
+@keyframes appleDrop{0%{transform:translateY(0) rotate(0deg)}75%{transform:translateY(105px) rotate(25deg)}100%{transform:translateY(96px) rotate(12deg)}}
+@keyframes swimFish{0%,100%{transform:translate(0,0) scaleX(1)}50%{transform:translate(14px,-6px) scaleX(1)}}
+.deco{position:absolute;pointer-events:none;animation:float 5s ease-in-out infinite}
+.pop .badge,.pop .tick,.pop .xmark{animation:pop .34s cubic-bezier(.3,1.6,.5,1)}
+.dot.busy{animation:pulse .8s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+
+/* ---------- 前台（教室大螢幕） ---------- */
+#front{height:100vh;height:100dvh;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:.8vh;padding:1.5vh 1.3vw .6vh}
+.main{display:grid;grid-template-columns:55fr 45fr;gap:1.3vw;min-height:0}
+.panel{position:relative;display:flex;flex-direction:column;min-height:0;overflow:hidden;background:var(--card);border:var(--bd);border-radius:var(--r);box-shadow:var(--shadow)}
+.phead{position:relative;flex:none;display:flex;align-items:center;gap:.9vw;padding:.9vh 1.2vw;border-bottom:var(--bd);min-height:9vh}
+.left .phead{background:var(--sky)}
+.right .phead{background:var(--yellow);justify-content:space-between}
+.hicon{width:6.4vh;height:6.4vh;flex:none}
+.ttl h1{font-size:clamp(20px,3.5vh,44px);line-height:1.15}
+.ttl p{font-size:clamp(11px,1.75vh,22px);margin-top:.4vh;line-height:1.3}
+.phead .deco{right:1vw;top:50%;margin-top:-3.6vh;width:7.2vh;height:7.2vh;--rot:8deg}
+.phead .pencil-secret{pointer-events:auto;cursor:pointer;border-radius:14px;transition:transform .12s}
+.phead .pencil-secret:active{transform:scale(.88)}
+
+/* 作業表格 */
+.tblwrap{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
+.tbl{flex:1;min-height:0;display:grid;--b:clamp(38px,5.2vh,54px);
+  grid-template-columns:minmax(150px,1.35fr) repeat(var(--cols),minmax(120px,1fr));
+  grid-template-rows:auto repeat(var(--rows),minmax(68px,1fr));
+  overflow:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.th{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:center;text-align:center;padding:1vh .6vw;background:#FFF3D1;border-bottom:var(--bd);border-left:2px solid rgba(62,58,57,.35);font-size:clamp(16px,2.7vh,32px);line-height:1.25;font-weight:700;word-break:break-word}
+.th.corner{left:0;z-index:4;justify-content:flex-start;padding:1vh .8vw;border-left:0;background:var(--green);font-size:clamp(15px,2.4vh,28px)}
+.dense .th{font-size:clamp(14px,2.2vh,26px)}
+.tmp{font-style:normal;margin-left:.3em;padding:0 .35em;border:2px solid var(--ink);border-radius:8px;background:var(--coral);font-size:.7em}
+.nm{position:sticky;left:0;z-index:2;display:flex;align-items:center;gap:.5vw;padding:0 .8vw;border-bottom:2px solid rgba(62,58,57,.22);font-size:clamp(16px,2.9vh,34px);white-space:nowrap;overflow:hidden;border-top:0;border-left:0;border-right:0;background:var(--card);text-align:left;width:100%}
+.nm.odd{background:#FFF7E6}
+.nm .no{display:grid;place-items:center;flex:none;min-width:1.55em;height:1.55em;padding:0 .2em;border:2px solid var(--ink);border-radius:50%;background:var(--paper);font-size:.82em;line-height:1}
+.nm .sname{overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.nm-btn{cursor:pointer}
+.nm-btn:hover{background:#FFF3D1}
+.nm-btn:active{transform:scale(.97)}
+.star-ic{width:1.15em;height:1.15em;flex:none;animation:twinkle 1.6s ease-in-out infinite;filter:drop-shadow(1px 1px 0 rgba(62,58,57,.4))}
+.star-done{flex:none;display:inline-flex;align-items:center;gap:.15em;padding:.08em .42em;border:2px solid var(--ink);border-radius:999px;background:var(--yellow);font-size:.58em;font-weight:700;line-height:1.2}
+.cell{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;padding:0;border:0;border-bottom:2px solid rgba(62,58,57,.22);border-left:2px solid rgba(62,58,57,.2);background:transparent}
+.odd{background:#FFF7E6}
+.bw{position:relative;display:inline-flex;width:var(--b);height:var(--b)}
+.badge{display:grid;place-items:center;width:100%;height:100%;border:3px solid var(--ink);border-radius:28%;font-size:calc(var(--b)*.6);line-height:1;font-weight:700;transition:transform .12s}
+.badge.red{background:var(--red);color:#fff}
+.badge.blue{background:var(--sky);color:var(--navy)}
+.tick{width:calc(var(--b)*1.1);height:calc(var(--b)*1.1);transition:transform .12s}
+.xmark{position:absolute;left:-14%;top:-14%;width:128%;height:128%;pointer-events:none}
+.none{opacity:.22;font-size:calc(var(--b)*.55)}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2vh;text-align:center;padding:2vh;font-size:clamp(16px,3vh,36px)}
+.empty svg{width:16vh;height:16vh;animation:float 5s ease-in-out infinite}
+.empty small{font-size:.6em;opacity:.75}
+
+.legend{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:.5vh 1.1vw;padding:.7vh 1vw;border-top:var(--bd);background:#FFF7E6;font-size:clamp(10px,1.6vh,19px)}
+.legend .li{display:inline-flex;align-items:center;gap:.4em;--b:2.4vh}
+.legend .li .badge{border-width:2px}
+.carry{flex:none;display:flex;gap:.8vw;align-items:flex-start;max-height:17vh;padding:.8vh 1vw;border-top:var(--bd);background:#FDEBE6}
+.ctag{flex:none;padding:.5vh 1vw;border:var(--bd);border-radius:14px;background:var(--coral);font-size:clamp(12px,2vh,24px);font-weight:700;line-height:1.2;box-shadow:3px 3px 0 var(--ink)}
+.cbody{flex:1;min-width:0;max-height:15vh;overflow:auto;display:flex;flex-wrap:wrap;gap:.6vh .8vw;align-content:flex-start;--b:3.4vh}
+.cg{display:inline-flex;align-items:center;flex-wrap:wrap;gap:.35vw;padding:.4vh .7vw;border:2px solid var(--ink);border-radius:14px;background:var(--card);font-size:clamp(11px,1.9vh,22px)}
+.cg .cd{font-weight:700}
+.cg .badge{border-width:2px}
+.cok{align-self:center;font-size:clamp(12px,2vh,24px)}
+
+/* 右：聯絡簿 + 今日黑板便條 */
+.rhead{display:flex;align-items:center;justify-content:space-between;width:100%;gap:.6vw}
+.navbtn{flex:none;width:6.2vh;height:6.2vh;display:grid;place-items:center;border:var(--bd);border-radius:50%;background:var(--card);box-shadow:3px 3px 0 var(--ink);padding:0}
+.navbtn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.navbtn svg{width:55%;height:55%}
+.dtbox{flex:1;text-align:center;min-width:0}
+.dt{font-size:clamp(17px,3.1vh,40px);line-height:1.25;font-weight:700}
+.dtsub{margin-top:.3vh;font-size:clamp(11px,1.7vh,20px);min-height:1.2em}
+.chip{display:inline-block;padding:0 .7em;border:2px solid var(--ink);border-radius:999px;background:var(--coral);font-size:.9em}
+.chipbtn{font:inherit;cursor:pointer;background:var(--sky)}
+.notice-bar{flex:none;display:flex;align-items:center;gap:.6vw;padding:.8vh 1.1vw;border-bottom:var(--bd);background:#FDEBE6;font-size:clamp(14px,2.2vh,25px);font-weight:700;line-height:1.35}
+.notice-bar .ntag{flex:none;padding:.1em .55em;border:2px solid var(--ink);border-radius:10px;background:var(--coral);font-size:.82em}
+.rbody{position:relative;flex:1;min-height:0;display:flex;padding:1.2vh 1.4vw}
+.vbox{flex:1;align-self:stretch;min-width:0;overflow:hidden;writing-mode:vertical-rl;text-orientation:mixed;font-size:var(--vfs,4vh);line-height:1.55}
+.vbox ol{list-style:none;margin:0;padding:0;height:100%}
+.vbox li{margin:0;padding-left:.45em;margin-left:.45em;border-left:2px dashed rgba(62,58,57,.4)}
+.vbox li:last-child{border-left:0}
+.vbox .no{text-combine-upright:all;-webkit-text-combine:horizontal;font-weight:700;color:var(--coral);-webkit-text-stroke:0;margin-block-end:.15em;display:inline-block}
+.vbox .tcy{text-combine-upright:all;-webkit-text-combine:horizontal;white-space:nowrap}
+.vbox li.hw .t{background:#FBE7B0;border-radius:6px}
+.rfoot{flex:none;position:relative;display:flex;align-items:center;gap:1vw;min-height:6vh;padding:.5vh 1.2vw;border-top:var(--bd);background:#FFF7E6;font-size:clamp(10px,1.6vh,19px)}
+.rfoot .sw{display:inline-block;width:1.4em;height:1em;border:2px solid var(--ink);border-radius:5px;background:#FBE7B0;vertical-align:-.15em;margin-right:.4em}
+.rfoot .sky-icons{margin-left:auto;display:flex;align-items:center;gap:.6vw}
+.rfoot .sky-icons svg{width:5vh;height:5vh;animation:float 4.5s ease-in-out infinite}
+.rfoot .sky-icons svg:nth-child(2){animation-delay:-1.6s}
+.rfoot .sky-icons svg:nth-child(3){animation-delay:-3s}
+
+/* 底部列 */
+.fbar{display:flex;align-items:center;justify-content:space-between;gap:1vw;font-size:clamp(10px,1.6vh,18px);min-height:3.4vh}
+.sync{display:inline-flex;align-items:center;gap:.5em;opacity:.75}
+.dot{width:.8em;height:.8em;border-radius:50%;background:var(--tickgreen);border:2px solid var(--ink)}
+.dot.off{background:var(--red)}
+.fbar-acts{display:flex;align-items:center;gap:.6vw;flex-wrap:wrap}
+.tbtn{opacity:.85;padding:.4vh 1vw;border:2px solid var(--ink);border-radius:999px;background:var(--card);font-size:inherit;box-shadow:2px 2px 0 var(--ink)}
+.tbtn.rank{background:var(--yellow);font-weight:700}
+.tbtn:hover,.tbtn:focus-visible{opacity:1}
+.tbtn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink)}
+
+/* 窄螢幕／直式（手機看前台） */
+@media (max-aspect-ratio:1/1),(max-width:820px){
+  body{overflow:auto}
+  #front{height:auto;min-height:100dvh;display:block;padding:10px}
+  .main{display:flex;flex-direction:column;gap:14px}
+  .panel{overflow:visible}
+  .phead{min-height:64px;padding:8px 12px;gap:10px}
+  .hicon{width:44px;height:44px}
+  .ttl h1{font-size:22px}.ttl p{font-size:12px}
+  .phead .deco{width:50px;height:50px;margin-top:-25px}
+  .tbl{--b:40px;grid-template-columns:minmax(125px,1.3fr) repeat(var(--cols),minmax(105px,1fr));grid-template-rows:auto repeat(var(--rows),64px);max-height:58vh;flex:none}
+  .th{font-size:15px}.th.corner{font-size:14px}.nm{font-size:16px;padding:0 8px;gap:6px}
+  .legend{font-size:12px;gap:6px 12px}.legend .li{--b:22px}
+  .carry{max-height:none;flex-direction:column;padding:10px 12px}.cbody{max-height:none;--b:28px}
+  .ctag{font-size:15px}.cg{font-size:13px}
+  .navbtn{width:44px;height:44px}.dt{font-size:20px}.dtsub{font-size:12px}
+  .notice-bar{font-size:14px;padding:8px 12px}
+  .rbody{flex:none;height:62vh;padding:10px 12px}
+  .rfoot{font-size:12px}.rfoot .sky-icons svg{width:34px;height:34px}
+  .fbar{font-size:12px;padding:10px 4px;flex-wrap:wrap}.tbtn{padding:6px 12px}
+}
+
+/* ---------- 彈窗／提示 ---------- */
+.overlay{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(62,58,57,.38)}
+.overlay.show{display:flex}
+.modal{width:min(490px,100%);max-height:90vh;overflow:auto;padding:22px;background:var(--card);border:var(--bd);border-radius:var(--r);box-shadow:var(--shadow)}
+.modal h2{font-size:26px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.in{width:100%;min-height:52px;padding:10px 14px;border:var(--bd);border-radius:14px;background:#fff;font:inherit;font-size:19px;color:var(--ink)}
+.in:focus{outline:3px solid var(--sky);outline-offset:1px}
+.row2{display:flex;gap:10px;margin-top:14px}
+.btn{min-height:56px;padding:10px 18px;border:var(--bd);border-radius:16px;background:var(--yellow);box-shadow:3px 3px 0 var(--ink);font-size:20px;line-height:1.2}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn.sky{background:var(--sky)}.btn.green{background:var(--green)}.btn.coral{background:var(--coral)}.btn.plain{background:var(--card)}
+.btn.sm{min-height:44px;padding:6px 12px;font-size:17px;border-radius:14px}
+.btn[disabled]{opacity:.5}
+.grow{flex:1}
+#toast{position:fixed;left:50%;bottom:4vh;z-index:80;transform:translateX(-50%);padding:10px 20px;border:var(--bd);border-radius:999px;background:var(--yellow);box-shadow:var(--shadow);font-size:18px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:92vw;text-align:center}
+#toast.show{opacity:1}
+
+/* ---------- 星星抽獎（10種內建 + 無限外掛） ---------- */
+.lotto-box{text-align:center}
+.lotto-box h2{justify-content:center;font-size:27px}
+.lotto-who{font-size:20px;margin-bottom:12px;padding:5px 16px;display:inline-block;background:var(--sky);border:2px solid var(--ink);border-radius:999px}
+.lotto-msg{font-size:19px;line-height:1.5;min-height:2.8em;margin-top:10px}
+
+.cards-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px auto 14px;max-width:390px}
+.lcard{aspect-ratio:3/4;border:var(--bd);border-radius:18px;background:linear-gradient(145deg,#FFF4CC,#F6D27A);box-shadow:4px 4px 0 var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px;transition:transform .15s,background .2s}
+.lcard:hover:not(:disabled){transform:translateY(-5px)}
+.lcard svg{width:54px;height:54px}
+.lcard span{font-size:18px;font-weight:700}
+.lcard.picked{background:#FFFDF5;border-color:var(--red);transform:scale(1.06)}
+.lcard.dim{opacity:.55;background:#F3EFE6}
+.lcard .cpts{font-size:34px;font-weight:700;color:var(--red);animation:pop .4s cubic-bezier(.3,1.6,.5,1)}
+
+.slot-wrap{display:flex;align-items:center;justify-content:center;gap:12px;margin:10px auto 14px}
+.slot-frame{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px;background:var(--coral);border:var(--bd);border-radius:20px;box-shadow:var(--shadow)}
+.slot-reel{width:76px;height:88px;background:var(--card);border:var(--bd);border-radius:14px;display:grid;place-items:center;font-size:34px;font-weight:700;color:var(--navy)}
+.slot-reel svg{width:46px;height:46px}
+.slot-lever{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 12px;background:var(--yellow);border:var(--bd);border-radius:18px;box-shadow:3px 3px 0 var(--ink);font-weight:700}
+.slot-ball{width:30px;height:30px;border-radius:50%;background:var(--red);border:var(--bd)}
+
+.wheel-wrap{position:relative;display:flex;flex-direction:column;align-items:center;margin:6px auto 12px}
+.wheel-drum{width:136px;height:136px;border-radius:50%;border:var(--bd);background:radial-gradient(circle at 35% 30%,#FFFFFF,#A8D3E6);box-shadow:var(--shadow);position:relative;display:grid;place-items:center}
+.wheel-drum.spinning{animation:spinDrum 1.05s cubic-bezier(.25,.85,.35,1)}
+.wheel-drum .mini-b{position:absolute;width:28px;height:28px;border-radius:50%;border:2.5px solid var(--ink);font-size:13px;font-weight:700;display:grid;place-items:center}
+.wheel-drum .b1{top:16px;left:34px;background:var(--yellow)}
+.wheel-drum .b2{top:34px;right:20px;background:var(--coral)}
+.wheel-drum .b3{bottom:22px;left:24px;background:var(--green)}
+.wheel-drum .b4{bottom:24px;right:34px;background:#FFF}
+.wheel-chute{margin-top:-10px;z-index:2;min-height:66px;display:grid;place-items:center}
+.gacha-ball{width:64px;height:64px;border-radius:50%;border:var(--bd);background:linear-gradient(135deg,#F6D27A 50%,#F2A497 50%);box-shadow:3px 3px 0 var(--ink);display:grid;place-items:center;font-size:26px;font-weight:700;color:var(--ink);animation:ballDrop .5s cubic-bezier(.3,1.5,.5,1)}
+
+.ropes-box{position:relative;max-width:360px;margin:8px auto 14px;padding-top:10px}
+.ropes-bar{height:22px;background:var(--coral);border:var(--bd);border-radius:999px;box-shadow:3px 3px 0 var(--ink);position:relative;z-index:2}
+.ropes-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:0 12px}
+.rope-btn{display:flex;flex-direction:column;align-items:center;background:transparent;border:0;padding:0}
+.rope-line{width:10px;height:68px;border-left:3px solid var(--ink);border-right:3px solid var(--ink);background:repeating-linear-gradient(45deg,#F6D27A,#F6D27A 8px,#FFF 8px,#FFF 16px)}
+.rope-btn[data-rope="1"] .rope-line{background:repeating-linear-gradient(45deg,#A8D3E6,#A8D3E6 8px,#FFF 8px,#FFF 16px)}
+.rope-btn[data-rope="2"] .rope-line{background:repeating-linear-gradient(45deg,#B9DAA5,#B9DAA5 8px,#FFF 8px,#FFF 16px)}
+.rope-knot{width:54px;height:54px;margin-top:-4px;border-radius:50%;border:var(--bd);background:var(--yellow);box-shadow:3px 3px 0 var(--ink);display:grid;place-items:center;font-size:18px;font-weight:700}
+.rope-btn.pulled{animation:ropePull .55s ease-out forwards}
+.rope-btn.pulled .rope-knot{background:#FFFDF5;border-color:var(--red);color:var(--red);font-size:24px;width:64px;height:64px}
+.rope-btn.dim{opacity:.48}
+
+.scratch-box{position:relative;width:270px;height:130px;margin:10px auto 14px;border:var(--bd);border-radius:20px;background:linear-gradient(135deg,#FFF4CC,#F6D27A);box-shadow:var(--shadow);overflow:hidden;user-select:none}
+.scratch-under{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:38px;font-weight:700;color:var(--red)}
+.scratch-under small{font-size:16px;color:var(--ink)}
+#scratchCanvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+
+.ring-stage{position:relative;height:185px;max-width:360px;margin:8px auto 12px;background:#EBF6FC;border:var(--bd);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:16px 12px}
+.ring-posts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;animation:swayPosts 2.2s ease-in-out infinite}
+.ring-posts.paused{animation-play-state:paused}
+.rpost{display:flex;flex-direction:column;align-items:center;position:relative}
+.rpost-cap{padding:4px 10px;border:2.5px solid var(--ink);border-radius:12px;background:var(--yellow);font-weight:700;font-size:18px}
+.rpost-stick{width:14px;height:44px;background:var(--coral);border:2.5px solid var(--ink);border-top:0}
+.ring-hoop{width:68px;height:24px;border:5px solid var(--red);border-radius:50%;margin:0 auto;box-shadow:0 2px 0 var(--ink);transition:transform .45s cubic-bezier(.2,1.4,.4,1)}
+.ring-hoop.landed{position:absolute;top:36px;left:50%;transform:translateX(-50%) scale(1.08);z-index:3}
+
+.hoop-stage{position:relative;height:190px;max-width:340px;margin:8px auto 12px;background:#FFF7E6;border:var(--bd);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:12px}
+.backboard{width:130px;height:68px;background:#FFF;border:var(--bd);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px;position:relative}
+.backboard-sq{width:46px;height:30px;border:3px solid var(--red)}
+.rim{width:56px;height:12px;background:var(--red);border:2.5px solid var(--ink);border-radius:999px;margin-top:-4px;z-index:2}
+.net{width:44px;height:26px;border-left:3px dashed var(--ink);border-right:3px dashed var(--ink);border-bottom:3px dashed var(--ink);border-radius:0 0 12px 12px}
+.bball{width:48px;height:48px;border-radius:50%;background:#F28C38;border:var(--bd);display:grid;place-items:center;font-size:22px;font-weight:700;box-shadow:2px 2px 0 var(--ink)}
+.bball.shoot{animation:shootBasket .75s ease-in forwards}
+.hoop-score{position:absolute;top:52px;font-size:32px;font-weight:700;color:var(--red);animation:pop .4s ease-out}
+
+.shoot-stage{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:380px;margin:12px auto 14px}
+.target-btn{aspect-ratio:1/1;border-radius:50%;border:var(--bd);background:radial-gradient(circle,var(--red) 0 24%,#FFF 24% 48%,var(--sky) 48% 72%,#FFF 72% 100%);box-shadow:3px 3px 0 var(--ink);display:grid;place-items:center;font-size:22px;font-weight:700;transition:transform .12s}
+.target-btn:hover:not(:disabled){transform:scale(1.07)}
+.target-btn.hit{background:#FFFDF5;border-color:var(--red);color:var(--red);font-size:30px;animation:pop .35s}
+.target-btn.dim{opacity:.48}
+
+.tree-stage{position:relative;height:200px;max-width:360px;margin:8px auto 12px;background:#EBF6FC;border:var(--bd);border-radius:18px;overflow:hidden}
+.tree-crown{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:270px;height:125px;background:var(--green);border:var(--bd);border-radius:60px}
+.tree-trunk{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:48px;height:75px;background:#C89D7C;border:var(--bd);border-bottom:0}
+.apple-btn{position:absolute;width:46px;height:46px;border-radius:50%;background:var(--red);border:2.5px solid var(--ink);color:#FFF;font-weight:700;font-size:15px;display:grid;place-items:center;box-shadow:2px 2px 0 var(--ink);z-index:2}
+.apple-btn.a0{top:26px;left:76px}
+.apple-btn.a1{top:22px;right:82px}
+.apple-btn.a2{top:72px;left:110px}
+.apple-btn.a3{top:68px;right:108px}
+.apple-btn.picked{animation:appleDrop .65s ease-in forwards;background:var(--yellow);color:var(--red);font-size:20px;width:54px;height:54px}
+.apple-btn.dim{opacity:.5}
+
+.pond-stage{position:relative;height:185px;max-width:370px;margin:8px auto 12px;background:linear-gradient(180deg,#D8F1FC,#A8D3E6);border:var(--bd);border-radius:22px;overflow:hidden}
+.fish-btn{position:absolute;padding:6px 12px;border-radius:999px;border:2.5px solid var(--ink);background:var(--coral);font-size:22px;box-shadow:2px 2px 0 var(--ink);animation:swimFish 2.4s ease-in-out infinite}
+.fish-btn.f0{top:24px;left:34px}
+.fish-btn.f1{top:28px;right:40px;background:var(--yellow);animation-delay:-.8s}
+.fish-btn.f2{bottom:28px;left:52px;background:#FFF;animation-delay:-1.5s}
+.fish-btn.f3{bottom:24px;right:48px;background:var(--green);animation-delay:-2.1s}
+.fish-btn.caught{animation:none;transform:scale(1.22);background:#FFFDF5;border-color:var(--red);color:var(--red);font-weight:700;z-index:3}
+.fish-btn.dim{opacity:.48}
+
+/* 排行榜 */
+.rank-list{display:flex;flex-direction:column;gap:8px}
+.rank-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px solid var(--ink);border-radius:14px;background:var(--paper);font-size:19px}
+.rank-row.top1{background:#FFF3C4}
+.rank-medal{width:32px;text-align:center;font-size:22px;font-weight:700;flex:none}
+.rank-name{flex:1;min-width:0}
+.rank-sc{font-size:22px;font-weight:700;color:var(--red)}
+
+/* ---------- 老師後台 ---------- */
+#admin{position:fixed;inset:0;z-index:30;display:none;overflow:auto;background:var(--paper);-webkit-overflow-scrolling:touch}
+body.admin-open #admin{display:block}
+body.admin-open #front{display:none}
+body.admin-open{overflow:hidden}
+.ad-wrap{max-width:1040px;margin:0 auto;padding:10px 14px 90px}
+.ad-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:6px 0}
+.ad-head h2{display:flex;align-items:center;gap:10px;font-size:28px;margin-right:auto}
+.ad-head h2 svg{width:44px;height:44px}
+.tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px 0;background:var(--paper)}
+.tab{min-height:60px;padding:6px;border:var(--bd);border-radius:16px;background:var(--card);font-size:18px;line-height:1.2}
+.tab.on{background:var(--yellow);box-shadow:3px 3px 0 var(--ink)}
+.tab small{display:block;font-size:12px;opacity:.75}
+.card{margin:0 0 16px;padding:14px;background:var(--card);border:var(--bd);border-radius:var(--r);box-shadow:var(--shadow)}
+.card h3{font-size:22px;margin-bottom:10px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.note{margin:6px 0 12px;font-size:17px;line-height:1.5}
+.sub{font-size:15px;opacity:.8;line-height:1.5}
+.weeknav{display:flex;align-items:center;gap:10px;margin:6px 0 14px}
+.weeknav .mid{flex:1;text-align:center;font-size:21px}
+.weekgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr));gap:16px}
+.card.today{background:#FFF6D8}
+.lrow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:10px}
+.lrow .sm{grid-column:1/-1}
+.chk{min-height:52px;padding:6px 10px;border:var(--bd);border-radius:14px;background:var(--card);font-size:16px;white-space:nowrap}
+.chk.on{background:var(--green)}
+.xbtn{width:52px;min-height:52px;border:var(--bd);border-radius:14px;background:var(--card);font-size:20px;padding:0}
+.stxt{font-size:15px;opacity:.8;margin-left:auto}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.chipsel{min-height:60px;padding:6px 16px;border:var(--bd);border-radius:16px;background:var(--card);font-size:20px;line-height:1.2;text-align:left}
+.chipsel.on{background:var(--sky);box-shadow:3px 3px 0 var(--ink)}
+.chipsel small{display:block;font-size:14px;opacity:.8}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0 14px}
+.mode{min-height:58px;padding:6px;border:var(--bd);border-radius:14px;background:var(--card);font-size:17px;line-height:1.2}
+.mode.on{background:var(--yellow);box-shadow:3px 3px 0 var(--ink)}
+.seats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.seatbtn{display:flex;align-items:center;gap:10px;min-height:86px;padding:8px 12px;border:var(--bd);border-radius:18px;background:var(--card);box-shadow:3px 3px 0 var(--ink);text-align:left;--b:46px}
+.seatbtn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.seatbtn.picked{background:#FFF3C4;border-color:var(--navy)}
+.seatbtn .ic{flex:none;width:58px;display:grid;place-items:center}
+.seatbtn .nmn{font-size:20px;line-height:1.2}
+.seatbtn .lbl{display:block;font-size:14px;opacity:.8}
+.bulk{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.tk{margin-bottom:14px;--b:42px}
+.tk .who{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:2px dashed rgba(62,58,57,.35)}
+.tk .who:first-of-type{border-top:0}
+.tk .wn{flex:1;min-width:120px;font-size:19px}
+.empty-ad{padding:30px 10px;text-align:center;font-size:21px}
+.empty-ad svg{width:120px;height:120px;margin:0 auto 10px;animation:float 5s ease-in-out infinite}
+select.in{min-height:52px;font-size:18px}
+@media (max-width:640px){
+  .ad-head h2{font-size:24px;width:100%}
+  .ad-head .btn{flex:1}
+  .tabs{grid-template-columns:repeat(2,1fr)}
+  .tab{font-size:16px;min-height:52px}
+  .seats{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-pencil" viewBox="0 0 100 100">
+      <g transform="rotate(40 50 50)" stroke="#3E3A39" stroke-width="3" stroke-linejoin="round">
+        <rect x="39" y="6" width="22" height="14" rx="4" fill="#F2A497"/>
+        <rect x="39" y="20" width="22" height="8" fill="#A8D3E6"/>
+        <rect x="39" y="28" width="22" height="44" fill="#F6D27A"/>
+        <polygon points="39,72 61,72 50,94" fill="#FFFCF6"/>
+        <polygon points="45.5,84 54.5,84 50,94" fill="#3E3A39"/>
+      </g>
+    </symbol>
+    <symbol id="i-book" viewBox="0 0 100 100">
+      <g stroke="#3E3A39" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M8 26 Q29 17 50 28 L50 82 Q29 71 8 80 Z" fill="#B9DAA5"/>
+        <path d="M92 26 Q71 17 50 28 L50 82 Q71 71 92 80 Z" fill="#FFFCF6"/>
+        <path d="M18 40 Q30 35 41 41 M18 52 Q30 47 41 53 M18 64 Q30 59 41 65" fill="none"/>
+        <path d="M59 41 Q70 35 82 40 M59 53 Q70 47 82 52 M59 65 Q70 59 82 64" fill="none"/>
+        <path d="M70 18 L70 36 L76 31 L82 36 L82 20" fill="#F2A497"/>
+      </g>
+    </symbol>
+    <symbol id="i-board" viewBox="0 0 100 100">
+      <g stroke="#3E3A39" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+        <rect x="9" y="12" width="82" height="58" rx="8" fill="#B9DAA5"/>
+        <rect x="16" y="19" width="68" height="44" rx="4" fill="#E9F4E0" stroke-width="2"/>
+        <path d="M24 33 H52 M24 45 H64 M24 55 H44" fill="none"/>
+        <polygon points="73,26 75.4,32 82,32.4 77,36.6 78.6,43 73,39.6 67.4,43 69,36.6 64,32.4 70.6,32" fill="#F6D27A" stroke-width="2"/>
+        <rect x="14" y="70" width="72" height="8" rx="3" fill="#F6D27A"/>
+        <path d="M24 78 L18 94 M76 78 L82 94" fill="none"/>
+      </g>
+    </symbol>
+    <symbol id="i-star" viewBox="0 0 100 100">
+      <polygon points="50,8 61,38 93,38 67,57 77,90 50,70 23,90 33,57 7,38 39,38" fill="#F6D27A" stroke="#3E3A39" stroke-width="3.5" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-cloud" viewBox="0 0 100 100">
+      <path d="M26 72 H74 A16 16 0 0 0 76 40 A22 22 0 0 0 34 34 A18 18 0 0 0 26 72 Z" fill="#EBF6FC" stroke="#3E3A39" stroke-width="3.2" stroke-linejoin="round"/>
+      <circle cx="42" cy="54" r="2.8" fill="#3E3A39"/>
+      <circle cx="58" cy="54" r="2.8" fill="#3E3A39"/>
+      <path d="M46 60 Q50 64 54 60" fill="none" stroke="#3E3A39" stroke-width="2.6" stroke-linecap="round"/>
+      <circle cx="35" cy="59" r="4" fill="#F2A497" opacity=".75"/>
+      <circle cx="65" cy="59" r="4" fill="#F2A497" opacity=".75"/>
+    </symbol>
+    <symbol id="i-moon" viewBox="0 0 100 100">
+      <path d="M62 14 A36 36 0 1 0 86 68 A28 28 0 1 1 62 14 Z" fill="#F6D27A" stroke="#3E3A39" stroke-width="3.2" stroke-linejoin="round"/>
+      <circle cx="43" cy="50" r="2.8" fill="#3E3A39"/>
+      <path d="M46 58 Q51 62 55 57" fill="none" stroke="#3E3A39" stroke-width="2.6" stroke-linecap="round"/>
+      <circle cx="74" cy="28" r="3" fill="#F2A497"/>
+    </symbol>
+    <symbol id="i-boat" viewBox="0 0 100 100">
+      <g stroke="#3E3A39" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M50 16 L50 62" fill="none"/>
+        <polygon points="50,18 50,56 22,56" fill="#A8D3E6"/>
+        <polygon points="50,24 50,56 76,56" fill="#F6D27A"/>
+        <path d="M14 62 H86 L74 80 H26 Z" fill="#F2A497"/>
+        <path d="M12 86 Q25 81 38 86 T64 86 T88 86" fill="none" stroke="#A8D3E6" stroke-width="3.5"/>
+      </g>
+    </symbol>
+    <symbol id="i-bird" viewBox="0 0 100 100">
+      <g stroke="#3E3A39" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M22 54 L10 46 L14 60 L8 66 L24 66 Z" fill="#A8D3E6"/>
+        <path d="M22 58 C22 36 42 26 60 32 C72 36 78 48 76 62 C74 75 60 80 44 80 C30 80 22 70 22 58 Z" fill="#B9DAA5"/>
+        <path d="M40 54 Q52 46 60 58 Q48 66 40 54 Z" fill="#FFFCF6"/>
+        <polygon points="76,46 90,51 76,56" fill="#F6D27A"/>
+        <circle cx="64" cy="45" r="3.2" fill="#3E3A39" stroke="none"/>
+        <circle cx="68" cy="53" r="4.2" fill="#F2A497" stroke="none" opacity=".85"/>
+        <path d="M44 80 L44 90 M56 80 L56 90" fill="none"/>
+      </g>
+    </symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 4 L7 12 L15 20" fill="none" stroke="#3E3A39" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 4 L17 12 L9 20" fill="none" stroke="#3E3A39" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<!-- ============ 前台：教室大螢幕 ============ -->
+<div id="front">
+  <div class="main">
+    <section class="panel left" aria-label="作業繳交情形">
+      <div class="phead">
+        <svg class="hicon" aria-hidden="true"><use href="#i-book"/></svg>
+        <div class="ttl">
+          <h1>今日應交作業</h1>
+          <p id="lsub">自動帶入前一個上課日聯絡簿項目</p>
+        </div>
+        <svg id="secretPencil" class="deco pencil-secret" role="button" tabindex="0" aria-label="鉛筆插圖"><use href="#i-pencil"/></svg>
+      </div>
+      <div id="tblWrap" class="tblwrap"><div class="empty"><svg aria-hidden="true"><use href="#i-cloud"/></svg><p>載入中…</p></div></div>
+      <div class="legend" id="legend"></div>
+      <div class="carry">
+        <div class="ctag">過去未結案追蹤</div>
+        <div id="carryBody" class="cbody"></div>
+      </div>
+    </section>
+
+    <section class="panel right" aria-label="今日聯絡簿">
+      <div class="phead">
+        <div class="rhead">
+          <button class="navbtn" id="prevBtn" aria-label="前一天"><svg aria-hidden="true"><use href="#i-left"/></svg></button>
+          <div class="dtbox">
+            <div class="dt" id="dt">—</div>
+            <div class="dtsub" id="dtsub"></div>
+          </div>
+          <button class="navbtn" id="nextBtn" aria-label="後一天"><svg aria-hidden="true"><use href="#i-right"/></svg></button>
+        </div>
+      </div>
+      <div class="notice-bar" id="noticeBar" style="display:none">
+        <span class="ntag">📢 重點提醒</span>
+        <span id="noticeTxt"></span>
+      </div>
+      <div class="rbody" id="rbody">
+        <div class="vbox" id="vbox" aria-label="聯絡簿內容"></div>
+        <div class="empty" id="vempty" style="display:none"><svg aria-hidden="true"><use href="#i-boat"/></svg><p>今天沒有聯絡簿內容</p></div>
+      </div>
+      <div class="rfoot">
+        <span><i class="sw"></i>黃底＝明天要交的作業</span>
+        <span class="sky-icons">
+          <svg aria-hidden="true"><use href="#i-cloud"/></svg>
+          <svg aria-hidden="true"><use href="#i-bird"/></svg>
+          <svg aria-hidden="true"><use href="#i-star"/></svg>
+        </span>
+      </div>
+    </section>
+  </div>
+
+  <div class="fbar">
+    <span class="sync"><i class="dot" id="dot"></i><span id="syncTxt">同步中…</span></span>
+    <div class="fbar-acts">
+      <button class="tbtn rank" id="rankBtn">🏆 班級積分榜</button>
+      <button class="tbtn" id="fsBtn">⛶ 全螢幕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 班級積分榜視窗 ============ -->
+<div class="overlay" id="rankOv" role="dialog" aria-modal="true" aria-labelledby="rankTtl">
+  <div class="modal">
+    <h2 id="rankTtl">🏆 班級積分排行榜</h2>
+    <div id="rankBody"></div>
+    <div class="row2">
+      <button type="button" class="btn green grow" id="rankClose">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 星星抽獎視窗（內建 10 種 + 外掛擴充） ============ -->
+<div class="overlay" id="lottoOv" role="dialog" aria-modal="true" aria-labelledby="lottoTtl">
+  <div class="modal lotto-box">
+    <h2 id="lottoTtl">⭐ 幸運星星抽獎</h2>
+    <div class="lotto-who" id="lottoWho"></div>
+    <div id="lottoGame"></div>
+    <div class="lotto-msg" id="lottoMsg"></div>
+    <div class="row2">
+      <button type="button" class="btn plain grow" id="lottoClose">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 老師後台 ============ -->
+<div id="admin">
+  <div class="ad-wrap">
+    <header class="ad-head">
+      <h2><svg aria-hidden="true"><use href="#i-board"/></svg>老師後台</h2>
+      <button class="btn coral" id="adArchive">📦 封存上月舊資料</button>
+      <button class="btn sky" id="adSync">手動立即同步</button>
+      <button class="btn plain" id="adBack">返回前台</button>
+    </header>
+    <nav class="tabs" id="tabs">
+      <button class="tab" data-tab="week">一週排程<small>聯絡簿與便條</small></button>
+      <button class="tab" data-tab="register">今日登記批改<small>點座號改狀態</small></button>
+      <button class="tab" data-tab="track">欠交追蹤<small>跨日未結案</small></button>
+      <button class="tab" data-tab="points">獎勵與積分<small>再抽獎與加減分</small></button>
+    </nav>
+    <div id="adBody"></div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $ = (s, r) => (r || document).querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const WD = ['日','一','二','三','四','五','六'];
+const LABEL = { unsubmitted:'未交', done:'已完成', correction:'待訂正', corrected:'訂正完成' };
+const NEXT  = { '':'done', done:'unsubmitted', unsubmitted:'correction', correction:'corrected', corrected:'' };
+const POLL_MS = 60000;
+
+function parseYmd(s){ const p = s.split('-').map(Number); return new Date(Date.UTC(p[0], p[1]-1, p[2])); }
+function fmtYmd(d){ return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0'); }
+function addDays(s,n){ const d = parseYmd(s); d.setUTCDate(d.getUTCDate()+n); return fmtYmd(d); }
+function dow(s){ return parseYmd(s).getUTCDay(); }
+function stepSchool(s,dir){ let d = addDays(s,dir); while(dow(d)===0 || dow(d)===6) d = addDays(d,dir); return d; }
+function md(s){ const p = s.split('-'); return (+p[1])+'/'+(+p[2]); }
+function nowTime(){ return new Date().toLocaleTimeString('zh-TW',{hour12:false}); }
+
+const S = {
+  board:null, viewDate:null, lastJson:'',
+  adminOpen:false, tab:'week',
+  week:null, draft:{}, dirty:{},
+  sel:null, mode:'done', tempOpen:false, delArm:false, resetArm:false,
+  lottoSeat:null, lottoBusy:false, lottoMode:0,
+  ptSeats:new Set(), ptReason:'發表踴躍',
+  pending:0, writeSeq:0, lastWrite:0, queue:Promise.resolve(), fetching:false, online:true,
+  batchBuffer:{}, batchTimer:null
+};
+
+// 【重要設定】請將下方引號內的網址，替換為你 Google Apps Script 部署後的「網頁應用程式網址」(結尾為 /exec)
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyHND1Zr2iAY-5Iy4_unmNZCxghphRqsOXED_YEDGhgojDiU26K17tF7SiLYCb25vp_/exec';
+
+async function gs(fn){
+  const args = Array.prototype.slice.call(arguments, 1);
+  // 若仍在 GAS iframe 內執行，優先使用原生高速通道
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(res => resolve(res))
+        .withFailureHandler(err => reject(err))
+        [fn].apply(null, args);
+    });
+  }
+  // 獨立託管於 GitHub Pages 時，改用 fetch() 跨網域呼叫 GAS API
+  if (!GAS_API_URL || GAS_API_URL.includes('請在這裡貼上')) {
+    throw new Error('尚未設定 GAS_API_URL！請開啟 index.html 第 333 行貼上你的 GAS 網址');
+  }
+  const res = await fetch(GAS_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ fn: fn, args: args }),
+    redirect: 'follow'
+  });
+  if (!res.ok) throw new Error('伺服器連線失敗 (HTTP ' + res.status + ')');
+  const data = await res.json();
+  if (data && data.error) throw new Error(data.error);
+  return data.result;
+}
+
+function errMsg(e){ return (e && e.message) ? String(e.message).replace(/^Error:\s*/,'') : String(e||'發生錯誤'); }
+function handleErr(e){ toast(errMsg(e)); }
+let toastT;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2800);
+}
+function enqueue(fn, args){
+  S.pending++; S.writeSeq++; S.lastWrite = Date.now();
+  S.queue = S.queue.then(()=>gs.apply(null,[fn].concat(args)))
+    .then(()=>{ S.pending--; S.lastWrite = Date.now(); })
+    .catch(e=>{ S.pending--; handleErr(e); fetchBoard(true); });
+  return S.queue;
+}
+
+/* ---------- 連點座號自動合併批次送出（350ms 防抖） ---------- */
+function flushStatusBuffer(){
+  clearTimeout(S.batchTimer);
+  S.batchTimer = null;
+  const keys = Object.keys(S.batchBuffer);
+  if (!keys.length) return Promise.resolve();
+  const payloadList = keys.map(k => S.batchBuffer[k]);
+  S.batchBuffer = {};
+  return enqueue('setStatusBatch', [payloadList]);
+}
+
+function queueStatusBatch(payloadList){
+  S.writeSeq++;
+  S.lastWrite = Date.now();
+  payloadList.forEach(p => {
+    const k = p.due + '|' + p.source + '|' + p.name + '|' + p.seat;
+    S.batchBuffer[k] = p;
+  });
+  clearTimeout(S.batchTimer);
+  S.batchTimer = setTimeout(() => { flushStatusBuffer(); }, 350);
+}
+
+function icon(status, seat){
+  if (status === 'done')
+    return '<svg class="tick" viewBox="0 0 60 60" aria-hidden="true"><path d="M9 32 L25 48 L52 13" fill="none" stroke="#3E3A39" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 32 L25 48 L52 13" fill="none" stroke="#6DB04F" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  if (status === 'unsubmitted') return '<span class="bw"><span class="badge red">'+seat+'</span></span>';
+  if (status === 'correction')  return '<span class="bw"><span class="badge blue">'+seat+'</span></span>';
+  if (status === 'corrected')
+    return '<span class="bw"><span class="badge blue">'+seat+'</span><svg class="xmark" viewBox="0 0 100 100" aria-hidden="true"><path d="M14 14 L86 86 M86 14 L14 86" stroke="#3E3A39" stroke-width="17" stroke-linecap="round"/><path d="M14 14 L86 86 M86 14 L14 86" stroke="#D9453D" stroke-width="9" stroke-linecap="round"/></svg></span>';
+  return '<span class="none">—</span>';
+}
+const skey = (it, seat) => it.source+'|'+it.name+'|'+seat;
+
+function canDraw(seat){
+  const b = S.board;
+  if (!b || b.date !== b.today) return false;
+  const regularItems = b.items.filter(it => !it.temp);
+  const hwCompleted = b.weekday && regularItems.length > 0 &&
+    regularItems.every(it => {
+      const t = b.status[skey(it, seat)];
+      return t === 'done' || t === 'corrected';
+    }) &&
+    !b.carry.some(g => g.entries.some(e => e.seat === seat));
+
+  const extra = (b.lotteryExtraQuota && Number(b.lotteryExtraQuota[seat])) || 0;
+  const used = (b.lotteryUsedCount && Number(b.lotteryUsedCount[seat])) || 0;
+  const totalAllowed = (hwCompleted ? 1 : 0) + extra;
+  return totalAllowed > used;
+}
+
+/* =====================================================
+ * 前台渲染
+ * ===================================================== */
+function renderDate(){
+  const b = S.board; if (!b) return;
+  const p = b.date.split('-').map(Number);
+  $('#dt').textContent = '民國'+(p[0]-1911)+'年'+p[1]+'月'+p[2]+'日 星期'+WD[dow(b.date)];
+  const sub = $('#dtsub');
+  if (b.date === b.today) sub.innerHTML = '<span class="chip">今天</span>';
+  else sub.innerHTML = '<button class="chip chipbtn" id="backToday">回到今天</button>';
+}
+
+function renderLegend(){
+  $('#legend').innerHTML =
+    '<span class="li">'+icon('unsubmitted','7')+'未交</span>'+
+    '<span class="li">'+icon('done')+'已完成</span>'+
+    '<span class="li">'+icon('correction','7')+'待訂正</span>'+
+    '<span class="li">'+icon('corrected','7')+'訂正完成</span>'+
+    '<span class="li" style="margin-left:auto;opacity:.85">⭐ 全交免訂正可點名字抽獎</span>';
+}
+
+function renderLeft(){
+  const b = S.board; if (!b) return;
+  const wrap = $('#tblWrap');
+  const items = b.items, st = b.students;
+  $('#lsub').textContent = b.weekday
+    ? '自動帶入前一個上課日聯絡簿項目・來自 '+(b.source?md(b.source)+'（'+WD[dow(b.source)]+'）':'—')
+    : '假日不用交作業';
+
+  if (!st.length) { wrap.innerHTML = '<div class="empty"><svg><use href="#i-cloud"/></svg><p>Students 工作表裡還沒有學生</p></div>'; }
+  else if (!items.length) {
+    wrap.innerHTML = '<div class="empty"><svg><use href="#i-moon"/></svg><p>'+(b.weekday?'今天沒有要交的作業':'假日好好休息')+'</p>'+
+      (b.weekday?'<small>前一個上課日的聯絡簿沒有勾選「隔天檢查」的項目</small>':'')+'</div>';
+  } else {
+    let h = '<div class="tbl'+(items.length>6?' dense':'')+'" id="tbl" style="--cols:'+items.length+';--rows:'+st.length+'">';
+    h += '<div class="th corner">座號 姓名</div>';
+    items.forEach(it => { h += '<div class="th">'+esc(it.name)+(it.temp?'<i class="tmp">臨</i>':'')+'</div>'; });
+    st.forEach((s,ri)=>{
+      const odd = ri%2 ? ' odd' : '';
+      const drew = b.date === b.today && b.lotteryToday && b.lotteryToday[s.seat];
+      const eligible = canDraw(s.seat);
+      if (eligible) {
+        h += '<button class="nm nm-btn'+odd+'" data-draw="'+s.seat+'" aria-label="'+s.seat+'號 '+esc(s.name)+' 點擊抽星星獎勵"><b class="no">'+s.seat+'</b><span class="sname">'+esc(s.name)+'</span><svg class="star-ic" aria-hidden="true"><use href="#i-star"/></svg></button>';
+      } else if (drew) {
+        const tot = (b.scoreTotal && b.scoreTotal[s.seat] != null) ? b.scoreTotal[s.seat] : drew;
+        h += '<div class="nm'+odd+'" title="今日已抽 +'+drew+' 分（總積分 '+tot+' 分）"><b class="no">'+s.seat+'</b><span class="sname">'+esc(s.name)+'</span><span class="star-done">⭐+'+drew+'</span></div>';
+      } else {
+        h += '<div class="nm'+odd+'"><b class="no">'+s.seat+'</b><span class="sname">'+esc(s.name)+'</span></div>';
+      }
+      items.forEach(it=>{
+        const stt = b.status[skey(it,s.seat)] || '';
+        h += '<div class="cell'+odd+'" aria-label="'+s.seat+'號 '+esc(it.name)+' '+(LABEL[stt]||'未登記')+'">'+icon(stt,s.seat)+'</div>';
+      });
+    });
+    h += '</div>';
+    wrap.innerHTML = h;
+  }
+
+  const cb = $('#carryBody');
+  if (!b.carry.length) cb.innerHTML = '<span class="cok">目前沒有欠交，太棒了！</span>';
+  else cb.innerHTML = b.carry.map(g =>
+    '<span class="cg"><span class="cd">'+md(g.due)+'</span>'+esc(g.name)+
+    g.entries.map(e=>'<span class="bw"><span class="badge '+(e.status==='unsubmitted'?'red':'blue')+'">'+e.seat+'</span></span>').join('')+'</span>'
+  ).join('');
+}
+
+function vtext(t){
+  return esc(t).replace(/[A-Za-z]+\d{1,2}|\d{1,3}|[A-Za-z]{1,2}/g, m => '<span class="tcy">'+m+'</span>');
+}
+function renderRight(){
+  const b = S.board; if (!b) return;
+  const nb = $('#noticeBar'), nt = $('#noticeTxt');
+  if (b.notice) { nb.style.display = 'flex'; nt.textContent = b.notice; }
+  else { nb.style.display = 'none'; nt.textContent = ''; }
+
+  const vb = $('#vbox'), ve = $('#vempty');
+  if (!b.lines.length) { vb.style.display='none'; ve.style.display='flex'; return; }
+  ve.style.display='none'; vb.style.display='';
+  vb.innerHTML = '<ol>'+b.lines.map((l,i)=>
+    '<li class="'+(l.hw?'hw':'')+'"><span class="no">'+(i+1)+'.</span><span class="t">'+vtext(l.t)+'</span></li>').join('')+'</ol>';
+  fitVertical();
+}
+function fitVertical(){
+  const vb = $('#vbox'); if (!vb || vb.style.display==='none') return;
+  const H = vb.clientHeight; if (!H) return;
+  let fs = Math.max(20, Math.min(64, Math.floor(H/9)));
+  for (; fs >= 14; fs -= 1) {
+    vb.style.setProperty('--vfs', fs+'px');
+    if (vb.scrollWidth <= vb.clientWidth + 1) break;
+  }
+}
+window.addEventListener('resize', ()=>{ fitVertical(); });
+
+function renderAll(){
+  renderDate(); renderLeft(); renderRight();
+  if (S.adminOpen) adminRefresh();
+}
+
+const LS_BOARD_KEY = 'CLASS_BOARD_SNAP_V2';
+function saveLocalSnap(jsonStr){
+  try { localStorage.setItem(LS_BOARD_KEY, jsonStr); } catch(e){}
+}
+function bootFromLocalSnap(){
+  try {
+    const raw = localStorage.getItem(LS_BOARD_KEY);
+    if (!raw) return false;
+    const obj = JSON.parse(raw);
+    if (!obj || !Array.isArray(obj.students)) return false;
+    S.lastJson = raw;
+    S.board = obj;
+    renderAll();
+    $('#syncTxt').textContent = '顯示本機快取・背景同步最新資料中…';
+    return true;
+  } catch(e) { return false; }
+}
+
+function dotBusy(on){ $('#dot').classList.toggle('busy', on); }
+async function fetchBoard(force){
+  if (!force && (S.pending > 0 || S.batchTimer || Date.now() - S.lastWrite < 3500)) return;
+  if (S.fetching) return;
+  S.fetching = true; dotBusy(true);
+  const w = S.writeSeq;
+  try {
+    const b = await gs('getBoard', S.viewDate, !!force);
+    if (w !== S.writeSeq || S.pending > 0 || S.batchTimer) return;
+    const rest = Object.assign({}, b); delete rest.syncedAt;
+    const j = JSON.stringify(rest);
+    S.online = true;
+    $('#dot').classList.remove('off');
+    $('#syncTxt').textContent = '最後同步 '+nowTime();
+    if (!S.viewDate) saveLocalSnap(j);
+    if (j !== S.lastJson) { S.lastJson = j; S.board = rest; renderAll(); }
+  } catch(e) {
+    S.online = false;
+    $('#dot').classList.add('off');
+    $('#syncTxt').textContent = '連線中斷，稍後自動重試（上次 '+(S.board?'已有資料':'尚無資料')+'）';
+    if (!S.board) $('#tblWrap').innerHTML = '<div class="empty"><svg><use href="#i-cloud"/></svg><p>'+esc(errMsg(e))+'</p></div>';
+  } finally { S.fetching = false; dotBusy(false); }
+}
+setInterval(()=>{ if (!document.hidden) fetchBoard(false); }, POLL_MS);
+document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) fetchBoard(false); });
+
+function gotoDate(d){
+  S.viewDate = (S.board && d === S.board.today) ? null : d;
+  S.lastJson = '';
+  fetchBoard(true);
+}
+$('#prevBtn').addEventListener('click', ()=>{ if (S.board) gotoDate(stepSchool(S.board.date,-1)); });
+$('#nextBtn').addEventListener('click', ()=>{ if (S.board) gotoDate(stepSchool(S.board.date, 1)); });
+$('#dtsub').addEventListener('click', e=>{ if (e.target.id==='backToday') { S.viewDate=null; S.lastJson=''; fetchBoard(true); } });
+
+/* ---------- 全螢幕切換 ---------- */
+function updFsBtn(){
+  const on = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  $('#fsBtn').textContent = on ? '✕ 退出全螢幕' : '⛶ 全螢幕';
+}
+$('#fsBtn').addEventListener('click', ()=>{
+  const doc = document, el = doc.documentElement;
+  if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+    (doc.exitFullscreen || doc.webkitExitFullscreen).call(doc);
+  } else if (el.requestFullscreen || el.webkitRequestFullscreen) {
+    (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+  } else {
+    toast('此瀏覽器不支援一鍵全螢幕，可使用「加入主畫面」');
+  }
+});
+document.addEventListener('fullscreenchange', ()=>{ updFsBtn(); setTimeout(fitVertical, 120); });
+document.addEventListener('webkitfullscreenchange', ()=>{ updFsBtn(); setTimeout(fitVertical, 120); });
+
+/* ---------- 班級積分榜（純個人排名） ---------- */
+function openRank(){
+  const b = S.board; if (!b) return;
+  const sc = b.scoreTotal || {};
+  const ranked = b.students.slice().sort((a,b2)=>((sc[b2.seat]||0)-(sc[a.seat]||0)) || (a.seat-b2.seat));
+  const medals = ['🥇','🥈','🥉'];
+  const h = '<div class="rank-list">' + ranked.map((s, idx) => {
+    const pts = sc[s.seat] || 0;
+    return '<div class="rank-row'+(idx===0 && pts>0?' top1':'')+'">'+
+      '<span class="rank-medal">'+(idx<3 && pts>0 ? medals[idx] : (idx+1))+'</span>'+
+      '<span class="rank-name">'+s.seat+' 號 '+esc(s.name)+'</span>'+
+      '<span class="rank-sc">'+pts+' 分</span></div>';
+  }).join('') + '</div>';
+  $('#rankBody').innerHTML = h;
+  $('#rankOv').classList.add('show');
+}
+$('#rankBtn').addEventListener('click', openRank);
+$('#rankClose').addEventListener('click', ()=>$('#rankOv').classList.remove('show'));
+
+/* =====================================================
+ * 星星抽獎（內建 10 種 + 外部 plugins.js 動態擴充）
+ * ===================================================== */
+function initScratchPad(seat){
+  const canvas = $('#scratchCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = 270, H = canvas.height = 130;
+  ctx.fillStyle = '#C5C9CE';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#A8AEB5';
+  for (let x = -H; x < W + H; x += 22) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0); ctx.lineTo(x + 10, 0);
+    ctx.lineTo(x - H + 10, H); ctx.lineTo(x - H, H);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.fillStyle = '#3E3A39';
+  ctx.font = 'bold 20px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('✨ 用手指刮開銀漆 ✨', W / 2, H / 2 + 7);
+
+  let drawing = false, fetched = false, revealed = false;
+
+  async function ensureScore(){
+    if (fetched) return;
+    fetched = true;
+    S.lottoBusy = true;
+    $('#lottoMsg').textContent = '刮開中，揭曉幸運分數…';
+    try {
+      const res = await gs('drawLottery', S.board.date, seat);
+      if (res && (res.ok || res.already)) {
+        $('#scratchPts').textContent = '+' + res.points + ' 分';
+        canvas._lottoRes = res;
+      }
+    } catch(e) {
+      $('#lottoMsg').textContent = errMsg(e);
+    }
+    S.lottoBusy = false;
+  }
+
+  function scratchAt(clientX, clientY){
+    if (revealed) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX - rect.left) * (W / rect.width);
+    const y = (clientY - rect.top) * (H / rect.height);
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(x, y, 22, 0, Math.PI * 2);
+    ctx.fill();
+    ensureScore();
+    checkPercent();
+  }
+
+  function checkPercent(){
+    if (revealed || !canvas._lottoRes) return;
+    const data = ctx.getImageData(0, 0, W, H).data;
+    let clear = 0;
+    for (let i = 3; i < data.length; i += 16) {
+      if (data[i] === 0) clear++;
+    }
+    if (clear / (data.length / 16) > 0.42) {
+      revealed = true;
+      canvas.style.transition = 'opacity .35s';
+      canvas.style.opacity = '0';
+      finishLottoState(seat, canvas._lottoRes);
+    }
+  }
+
+  canvas.addEventListener('pointerdown', e => { drawing = true; scratchAt(e.clientX, e.clientY); });
+  canvas.addEventListener('pointermove', e => { if (drawing) scratchAt(e.clientX, e.clientY); });
+  window.addEventListener('pointerup', () => { drawing = false; checkPercent(); }, { once: false });
+}
+
+function openLotto(seat){
+  const b = S.board; if (!b) return;
+  const stu = b.students.find(s => s.seat === seat); if (!stu) return;
+  S.lottoSeat = seat;
+  S.lottoBusy = false;
+
+  const extraPlugins = Array.isArray(window.LOTTO_PLUGINS) ? window.LOTTO_PLUGINS : [];
+  const totalModes = 10 + extraPlugins.length;
+  const pick = Math.floor(Math.random() * totalModes);
+
+  $('#lottoWho').textContent = seat + ' 號 ' + stu.name;
+  $('#lottoClose').textContent = '關閉';
+  const gameEl = $('#lottoGame');
+  const msgEl = $('#lottoMsg');
+
+  /* 若抽中外部擴充的新遊戲（pick >= 10） */
+  if (pick >= 10) {
+    const plugin = extraPlugins[pick - 10];
+    $('#lottoTtl').textContent = plugin.title || '⭐ 特別抽獎遊戲';
+    msgEl.innerHTML = plugin.hint || '點擊互動領取星星獎勵！';
+    plugin.render(gameEl, async () => {
+      const res = await gs('drawLottery', S.board.date, seat);
+      if (res && (res.ok || res.already)) finishLottoState(seat, res);
+      return res;
+    });
+    $('#lottoOv').classList.add('show');
+    return;
+  }
+
+  S.lottoMode = pick;
+
+  if (S.lottoMode === 0) {
+    $('#lottoTtl').textContent = '🃏 幸運掀牌 3 選 1';
+    const cardIcons = ['#i-star', '#i-moon', '#i-cloud'];
+    gameEl.innerHTML = '<div class="cards-row">' + [0,1,2].map(i =>
+      '<button type="button" class="lcard" data-lcard="'+i+'">'+
+      '<svg aria-hidden="true"><use href="'+cardIcons[i]+'"/></svg><span>第 '+(i+1)+' 張</span></button>'
+    ).join('') + '</div>';
+    msgEl.innerHTML = '請點選一張幸運卡片掀開獎勵（+1～+3 分）！';
+  } else if (S.lottoMode === 1) {
+    $('#lottoTtl').textContent = '🎰 幸運拉霸機';
+    gameEl.innerHTML =
+      '<div class="slot-wrap">'+
+        '<div class="slot-frame">'+
+          '<div class="slot-reel" id="reel0"><svg><use href="#i-star"/></svg></div>'+
+          '<div class="slot-reel" id="reel1"><svg><use href="#i-moon"/></svg></div>'+
+          '<div class="slot-reel" id="reel2"><svg><use href="#i-bird"/></svg></div>'+
+        '</div>'+
+        '<button type="button" class="slot-lever" id="slotPull"><span class="slot-ball"></span><span>拉霸！</span></button>'+
+      '</div>';
+    msgEl.innerHTML = '按下右邊「拉霸！」啟動轉輪吧！';
+  } else if (S.lottoMode === 2) {
+    $('#lottoTtl').textContent = '🔮 幸運滾珠珠轉盤';
+    gameEl.innerHTML =
+      '<div class="wheel-wrap">'+
+        '<div class="wheel-drum" id="wheelDrum">'+
+          '<span class="mini-b b1">+1</span><span class="mini-b b2">+2</span>'+
+          '<span class="mini-b b3">+3</span><span class="mini-b b4">⭐</span>'+
+        '</div>'+
+        '<div class="wheel-chute" id="wheelChute">'+
+          '<button type="button" class="btn green sm" id="wheelSpin">轉動滾出幸運珠 ✨</button>'+
+        '</div>'+
+      '</div>';
+    msgEl.innerHTML = '轉動滾輪，看看會滾出幾分的珠珠！';
+  } else if (S.lottoMode === 3) {
+    $('#lottoTtl').textContent = '🎀 幸運抽繩結 3 選 1';
+    gameEl.innerHTML =
+      '<div class="ropes-box">'+
+        '<div class="ropes-bar"></div>'+
+        '<div class="ropes-row">' + ['黃繩','藍繩','綠繩'].map((nm, i) =>
+          '<button type="button" class="rope-btn" data-rope="'+i+'">'+
+            '<span class="rope-line"></span>'+
+            '<span class="rope-knot">'+nm+'</span>'+
+          '</button>'
+        ).join('') + '</div>'+
+      '</div>';
+    msgEl.innerHTML = '選一條幸運繩結拉拉看吧！';
+  } else if (S.lottoMode === 4) {
+    $('#lottoTtl').textContent = '🪙 幸運刮刮樂';
+    gameEl.innerHTML =
+      '<div class="scratch-box">'+
+        '<div class="scratch-under"><span id="scratchPts">？分</span><small>恭喜中獎</small></div>'+
+        '<canvas id="scratchCanvas"></canvas>'+
+      '</div>';
+    msgEl.innerHTML = '用手指或滑鼠把灰色銀漆刮開吧！';
+    setTimeout(() => initScratchPad(seat), 30);
+  } else if (S.lottoMode === 5) {
+    $('#lottoTtl').textContent = '⭕ 夜市套圈圈';
+    gameEl.innerHTML =
+      '<div class="ring-stage">'+
+        '<div class="ring-posts" id="ringPosts">'+
+          '<div class="rpost" id="rpost0"><div class="rpost-cap" id="rcap0">？</div><div class="rpost-stick"></div></div>'+
+          '<div class="rpost" id="rpost1"><div class="rpost-cap" id="rcap1">？</div><div class="rpost-stick"></div></div>'+
+          '<div class="rpost" id="rpost2"><div class="rpost-cap" id="rcap2">？</div><div class="rpost-stick"></div></div>'+
+        '</div>'+
+        '<div class="ring-hoop" id="ringHoop"></div>'+
+      '</div>'+
+      '<button type="button" class="btn green sm" id="ringThrow">丟出套圈圈 ⭕</button>';
+    msgEl.innerHTML = '瞄準擺動的獎品柱，按下丟出套圈圈！';
+  } else if (S.lottoMode === 6) {
+    $('#lottoTtl').textContent = '🏀 幸運投籃機';
+    gameEl.innerHTML =
+      '<div class="hoop-stage">'+
+        '<div class="backboard"><div class="backboard-sq"></div></div>'+
+        '<div class="rim"></div><div class="net"></div>'+
+        '<div id="hoopScore" class="hoop-score" style="display:none"></div>'+
+        '<div class="bball" id="bball">🏀</div>'+
+      '</div>'+
+      '<button type="button" class="btn green sm" id="shootBall">出手投籃！ 🏀</button>';
+    msgEl.innerHTML = '點擊「出手投籃！」，看看這球得幾分！';
+  } else if (S.lottoMode === 7) {
+    $('#lottoTtl').textContent = '🎯 神射手打靶';
+    gameEl.innerHTML =
+      '<div class="shoot-stage">' + [0,1,2].map(i =>
+        '<button type="button" class="target-btn" data-target="'+i+'">🎯</button>'
+      ).join('') + '</div>';
+    msgEl.innerHTML = '選一個標靶射擊，看看能射中幾分！';
+  } else if (S.lottoMode === 8) {
+    $('#lottoTtl').textContent = '🍎 幸運摘蘋果';
+    gameEl.innerHTML =
+      '<div class="tree-stage">'+
+        '<div class="tree-crown"></div><div class="tree-trunk"></div>' +
+        [0,1,2,3].map(i => '<button type="button" class="apple-btn a'+i+'" data-apple="'+i+'">🍎</button>').join('') +
+      '</div>';
+    msgEl.innerHTML = '點選樹上一顆紅蘋果摘下來吧！';
+  } else {
+    $('#lottoTtl').textContent = '🐟 夜市撈金魚';
+    gameEl.innerHTML =
+      '<div class="pond-stage">' +
+        ['🐠','🐟','🐡','🎏'].map((ic, i) =>
+          '<button type="button" class="fish-btn f'+i+'" data-fish="'+i+'">'+ic+'</button>'
+        ).join('') +
+      '</div>';
+    msgEl.innerHTML = '點選水池裡一隻小魚撈起來吧！';
+  }
+  $('#lottoOv').classList.add('show');
+}
+
+function closeLotto(){
+  if (S.lottoBusy) return;
+  $('#lottoOv').classList.remove('show');
+  S.lottoSeat = null;
+}
+
+function finishLottoState(seat, res){
+  if (!S.board.lotteryToday) S.board.lotteryToday = {};
+  if (!S.board.lotteryUsedCount) S.board.lotteryUsedCount = {};
+  if (!S.board.scoreTotal) S.board.scoreTotal = {};
+  S.board.lotteryToday[seat] = res.todayTotal != null ? res.todayTotal : ((S.board.lotteryToday[seat] || 0) + res.points);
+  S.board.lotteryUsedCount[seat] = res.usedCount != null ? res.usedCount : ((S.board.lotteryUsedCount[seat] || 0) + 1);
+  S.board.scoreTotal[seat] = res.total;
+  S.lastJson = '';
+  renderLeft();
+  $('#lottoMsg').innerHTML = (res.already ? '今天的抽獎機會已經用完囉！' : '🎉 恭喜獲得 <b>+'+res.points+' 分</b>！') +
+    '<br>目前總積分：<b>'+res.total+' 分</b>';
+  $('#lottoClose').textContent = '太棒了！';
+}
+
+$('#tblWrap').addEventListener('click', ev=>{
+  const btn = ev.target.closest('[data-draw]');
+  if (!btn || !S.board) return;
+  const seat = +btn.dataset.draw;
+  if (canDraw(seat)) openLotto(seat);
+});
+$('#lottoClose').addEventListener('click', closeLotto);
+
+$('#lottoGame').addEventListener('click', async ev=>{
+  if (S.lottoBusy || !S.lottoSeat || !S.board) return;
+  const seat = S.lottoSeat;
+
+  /* 0：掀牌 */
+  const cardBtn = ev.target.closest('[data-lcard]');
+  if (cardBtn) {
+    S.lottoBusy = true;
+    const pickedIdx = +cardBtn.dataset.lcard;
+    const allCards = [...document.querySelectorAll('.lcard')];
+    allCards.forEach(b => b.disabled = true);
+    cardBtn.classList.add('picked');
+    $('#lottoMsg').textContent = '掀開卡片中…';
+    try {
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 550))]);
+      if (res && (res.ok || res.already)) {
+        const others = [1, 2, 3].filter(n => n !== res.points);
+        let oi = 0;
+        allCards.forEach((b, idx) => {
+          if (idx === pickedIdx) b.innerHTML = '<div class="cpts">+'+res.points+'</div><span>恭喜獲得</span>';
+          else { b.classList.add('dim'); b.innerHTML = '<div style="font-size:24px;font-weight:700">+'+others[oi++]+'</div><span>未選中</span>'; }
+        });
+        finishLottoState(seat, res);
+      }
+    } catch(e) { $('#lottoMsg').textContent = errMsg(e); allCards.forEach(b => b.disabled = false); }
+    S.lottoBusy = false;
+    return;
+  }
+
+  /* 1：拉霸 */
+  if (ev.target.closest('#slotPull')) {
+    S.lottoBusy = true;
+    const pullBtn = $('#slotPull'); pullBtn.disabled = true;
+    $('#lottoMsg').textContent = '拉霸轉動中…';
+    const reels = [$('#reel0'), $('#reel1'), $('#reel2')];
+    const syms = ['⭐','🌙','☁️','⛵','🐦','+1','+2','+3'];
+    let tick = 0;
+    const iv = setInterval(()=>{
+      tick++;
+      reels.forEach((r, idx) => { if (!r.dataset.done) r.textContent = syms[(tick + idx * 3) % syms.length]; });
+    }, 85);
+    try {
+      const res = await gs('drawLottery', S.board.date, seat);
+      await new Promise(r => setTimeout(r, 600));
+      if (res && (res.ok || res.already)) {
+        for (let k = 0; k < 3; k++) {
+          reels[k].dataset.done = '1';
+          reels[k].innerHTML = '<span style="color:var(--red)">+'+res.points+'</span>';
+          if (k < 2) await new Promise(r => setTimeout(r, 250));
+        }
+        clearInterval(iv);
+        finishLottoState(seat, res);
+      } else clearInterval(iv);
+    } catch(e) { clearInterval(iv); $('#lottoMsg').textContent = errMsg(e); pullBtn.disabled = false; }
+    S.lottoBusy = false;
+    return;
+  }
+
+  /* 2：滾珠珠 */
+  if (ev.target.closest('#wheelSpin')) {
+    S.lottoBusy = true;
+    const spinBtn = $('#wheelSpin'); spinBtn.disabled = true;
+    const drum = $('#wheelDrum'); drum.classList.add('spinning');
+    $('#lottoMsg').textContent = '轉盤旋轉中，珠珠即將滾出…';
+    try {
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 1050))]);
+      drum.classList.remove('spinning');
+      if (res && (res.ok || res.already)) {
+        $('#wheelChute').innerHTML = '<div class="gacha-ball">+'+res.points+'</div>';
+        finishLottoState(seat, res);
+      }
+    } catch(e) { drum.classList.remove('spinning'); $('#lottoMsg').textContent = errMsg(e); spinBtn.disabled = false; }
+    S.lottoBusy = false;
+    return;
+  }
+
+  /* 3：抽繩結 */
+  const ropeBtn = ev.target.closest('[data-rope]');
+  if (ropeBtn) {
+    S.lottoBusy = true;
+    const pickedIdx = +ropeBtn.dataset.rope;
+    const allRopes = [...document.querySelectorAll('.rope-btn')];
+    allRopes.forEach(b => b.disabled = true);
+    ropeBtn.classList.add('pulled');
+    $('#lottoMsg').textContent = '用力拉出繩結中…';
+    try {
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 600))]);
+      if (res && (res.ok || res.already)) {
+        const others = [1, 2, 3].filter(n => n !== res.points);
+        let oi = 0;
+        allRopes.forEach((b, idx) => {
+          const knot = b.querySelector('.rope-knot');
+          if (idx === pickedIdx) knot.textContent = '+' + res.points + '分';
+          else { b.classList.add('dim'); knot.textContent = '+' + others[oi++]; }
+        });
+        finishLottoState(seat, res);
+      }
+    } catch(e) { $('#lottoMsg').textContent = errMsg(e); allRopes.forEach(b => { b.disabled = false; b.classList.remove('pulled'); }); }
+    S.lottoBusy = false;
+    return;
+  }
+
+  /* 5：套圈圈 */
+  if (ev.target.closest('#ringThrow')) {
+    S.lottoBusy = true;
+    const throwBtn = $('#ringThrow'); throwBtn.disabled = true;
+    $('#ringPosts').classList.add('paused');
+    $('#lottoMsg').textContent = '圈圈飛出去啦…';
+    try {
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 550))]);
+      if (res && (res.ok || res.already)) {
+        const winPost = Math.floor(Math.random() * 3);
+        const others = [1, 2, 3].filter(n => n !== res.points);
+        let oi = 0;
+        [0,1,2].forEach(i => {
+          $('#rcap' + i).textContent = '+' + (i === winPost ? res.points : others[oi++]) + '分';
+        });
+        const hoop = $('#ringHoop');
+        hoop.classList.add('landed');
+        $('#rpost' + winPost).appendChild(hoop);
+        $('#rcap' + winPost).style.background = 'var(--coral)';
+        finishLottoState(seat, res);
+      }
+    } catch(e) { $('#lottoMsg').textContent = errMsg(e); throwBtn.disabled = false; }
+    S.lottoBusy = false;
+    return;
+  }
+
+  /* 6：投籃 */
+  if (ev.target.closest('#shootBall')) {
+    S.lottoBusy = true;
+    const shootBtn = $('#shootBall'); shootBtn.disabled = true;
+    $('#bball').classList.add('shoot');
+    $('#lottoMsg').textContent = '漂亮拋物線飛向籃框…';
+    try {
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 750))]);
+      if (res && (res.ok || res.already)) {
+        const sc = $('#hoopScore');
+        sc.textContent = '空心入網 +' + res.points + ' 分！';
+        sc.style.display = 'block';
+        finishLottoState(seat, res);
+      }
+    } catch(e) { $('#lottoMsg').textContent = errMsg(e); shootBtn.disabled = false; }
+    S.lottoBusy = false;
+    return;
+  }
+
+  /* 7：射擊 */
+  const targetBtn = ev.target.closest('[data-target]');
+  if (targetBtn) {
+    S.lottoBusy = true;
+    const pickedIdx = +targetBtn.dataset.target;
+    const allTargets = [...document.querySelectorAll('.target-btn')];
+    allTargets.forEach(b => b.disabled = true);
+    $('#lottoMsg').textContent = '砰！子彈飛向標靶…';
+    try {
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 450))]);
+      if (res && (res.ok || res.already)) {
+        const others = [1, 2, 3].filter(n => n !== res.points);
+        let oi = 0;
+        allTargets.forEach((b, idx) => {
+          if (idx === pickedIdx) { b.classList.add('hit'); b.textContent = '+' + res.points + '分'; }
+          else { b.classList.add('dim'); b.textContent = '+' + others[oi++]; }
+        });
+        finishLottoState(seat, res);
+      }
+    } catch(e) { $('#lottoMsg').textContent = errMsg(e); allTargets.forEach(b => b.disabled = false); }
+    S.lottoBusy = false;
+    return;
+  }
+
+  /* 8：摘蘋果 */
+  const appleBtn = ev.target.closest('[data-apple]');
+  if (appleBtn) {
+    S.lottoBusy = true;
+    const pickedIdx = +appleBtn.dataset.apple;
+    const allApples = [...document.querySelectorAll('.apple-btn')];
+    allApples.forEach(b => b.disabled = true);
+    appleBtn.classList.add('picked');
+    $('#lottoMsg').textContent = '摘下紅蘋果囉…';
+    try {
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 650))]);
+      if (res && (res.ok || res.already)) {
+        allApples.forEach((b, idx) => {
+          if (idx === pickedIdx) b.textContent = '+' + res.points + '分';
+          else b.classList.add('dim');
+        });
+        finishLottoState(seat, res);
+      }
+    } catch(e) { $('#lottoMsg').textContent = errMsg(e); allApples.forEach(b => { b.disabled = false; b.classList.remove('picked'); }); }
+    S.lottoBusy = false;
+    return;
+  }
+
+  /* 9：撈魚 */
+  const fishBtn = ev.target.closest('[data-fish]');
+  if (fishBtn) {
+    S.lottoBusy = true;
+    const pickedIdx = +fishBtn.dataset.fish;
+    const allFish = [...document.querySelectorAll('.fish-btn')];
+    allFish.forEach(b => b.disabled = true);
+    $('#lottoMsg').textContent = '網子下水撈魚中…';
+    try {
+      const [res] = await Promise.all([gs('drawLottery', S.board.date, seat), new Promise(r => setTimeout(r, 500))]);
+      if (res && (res.ok || res.already)) {
+        allFish.forEach((b, idx) => {
+          if (idx === pickedIdx) { b.classList.add('caught'); b.textContent = '🥅 +' + res.points + '分'; }
+          else b.classList.add('dim');
+        });
+        finishLottoState(seat, res);
+      }
+    } catch(e) { $('#lottoMsg').textContent = errMsg(e); allFish.forEach(b => b.disabled = false); }
+    S.lottoBusy = false;
+  }
+});
+
+/* =====================================================
+ * 連點上方插圖的鉛筆三下 -> 直接開啟老師後台
+ * ===================================================== */
+let tapCnt = 0, tapTimer = null;
+$('#secretPencil').addEventListener('click', ()=>{
+  tapCnt++;
+  clearTimeout(tapTimer);
+  if (tapCnt >= 3) {
+    tapCnt = 0;
+    openAdmin();
+  } else {
+    tapTimer = setTimeout(()=>{ tapCnt = 0; }, 1200);
+  }
+});
+$('#secretPencil').addEventListener('keydown', ev=>{
+  if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openAdmin(); }
+});
+
+async function openAdmin(){
+  S.adminOpen = true; S.viewDate = null; S.lastJson = ''; S.resetArm = false;
+  document.body.classList.add('admin-open');
+  bumpIdle();
+  $('#adBody').innerHTML = '<div class="empty-ad">載入中…</div>';
+  await fetchBoard(true);
+  try { await loadWeek(null); } catch(e) { handleErr(e); }
+  renderAdmin();
+}
+async function backToFront(){
+  if (S.adminOpen) {
+    try { await flushStatusBuffer(); } catch(e){}
+    try { await saveAllDirty(); } catch(e){}
+  }
+  S.adminOpen = false;
+  document.body.classList.remove('admin-open');
+  S.viewDate = null; S.lastJson = ''; S.resetArm = false;
+  clearTimeout(idleT);
+  fetchBoard(true).then(()=>fitVertical());
+}
+$('#adBack').addEventListener('click', backToFront);
+$('#adSync').addEventListener('click', async ()=>{
+  await flushStatusBuffer();
+  await saveAllDirty();
+  await fetchBoard(true);
+  if (S.tab === 'week') { try { await loadWeek(S.week && S.week.monday); } catch(e){ handleErr(e); } }
+  renderAdmin(); toast('已同步 '+nowTime());
+});
+$('#adArchive').addEventListener('click', async ()=>{
+  if (!confirm('確定要將「本月 1 日以前」的舊紀錄封存至備份工作表嗎？\n（未結案的欠交紀錄會自動保留，封存後系統讀寫速度會大幅提升）')) return;
+  const btn = $('#adArchive');
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = '📦 封存整理中…';
+  try {
+    await flushStatusBuffer();
+    const res = await gs('archiveOldData');
+    S.writeSeq++; S.lastJson = '';
+    await fetchBoard(true);
+    if (S.tab === 'week') { try { await loadWeek(S.week && S.week.monday); } catch(e){} }
+    renderAdmin();
+    alert(res.message || '封存完成！');
+  } catch(e) {
+    handleErr(e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+});
+
+let idleT;
+function bumpIdle(){ clearTimeout(idleT); if (S.adminOpen) idleT = setTimeout(()=>{ backToFront(); toast('閒置太久，已自動返回前台'); }, 15*60*1000); }
+['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev, bumpIdle, {passive:true}));
+
+$('#tabs').addEventListener('click', async ev=>{
+  const t = ev.target.closest('.tab'); if (!t) return;
+  await flushStatusBuffer();
+  if (S.tab === 'week' && t.dataset.tab !== 'week') await saveAllDirty();
+  S.tab = t.dataset.tab; S.delArm = false; S.resetArm = false;
+  if (S.tab === 'week' && !S.week) { try { await loadWeek(null); } catch(e){ handleErr(e); } }
+  renderAdmin();
+  $('#admin').scrollTop = 0;
+});
+
+function adminRefresh(){
+  if (!S.adminOpen) return;
+  const ae = document.activeElement;
+  if (ae && ae.closest && ae.closest('#admin') && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
+  if (S.tab === 'register' || S.tab === 'track' || S.tab === 'points') renderAdmin();
+}
+function renderAdmin(){
+  document.querySelectorAll('#tabs .tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===S.tab));
+  const body = $('#adBody');
+  if (S.tab === 'week') body.innerHTML = viewWeek();
+  else if (S.tab === 'register') { body.innerHTML = '<div id="regTop"></div><div id="regSeats"></div>'; renderRegTop(); renderRegSeats(); }
+  else if (S.tab === 'track') body.innerHTML = viewTrack();
+  else body.innerHTML = viewPoints();
+}
+
+/* ---------- 分頁一：一週排程 + 黑板便條 ---------- */
+async function loadWeek(anchor){
+  const w = await gs('getWeek', anchor || null);
+  S.week = w; S.draft = {}; S.dirty = {};
+  w.days.forEach(d=>{
+    const rows = d.lines.map(l=>({ t:l.t, c:l.hw, s:(l.hw && l.name && l.name!==l.t) ? l.name : '' }));
+    rows.push({ t:'', c:true, s:'' });
+    S.draft[d.date] = rows;
+  });
+}
+function nextSchoolLabel(date){ const n = stepSchool(date,1); return md(n)+'（'+WD[dow(n)]+'）'; }
+function dayCard(d){
+  const rows = S.draft[d.date] || [];
+  const isToday = d.date === S.week.today;
+  let h = '<section class="card'+(isToday?' today':'')+'" data-day="'+d.date+'">';
+  h += '<h3>週'+WD[dow(d.date)]+' '+md(d.date)+(isToday?' <span class="chip" style="background:var(--coral)">今天</span>':'')+'</h3>';
+  rows.forEach((r,i)=>{
+    h += '<div class="lrow" data-i="'+i+'">'+
+      '<input class="in" data-f="t" value="'+esc(r.t)+'" placeholder="第 '+(i+1)+' 項聯絡簿內容" maxlength="80" enterkeyhint="next">'+
+      '<button class="chk'+(r.c?' on':'')+'" data-act="chk" aria-pressed="'+r.c+'">'+(r.c?'☑ 隔天檢查':'☐ 不檢查')+'</button>'+
+      '<button class="xbtn" data-act="del" aria-label="刪除這一項">✕</button>'+
+      (r.c ? '<input class="in sm" data-f="s" value="'+esc(r.s)+'" placeholder="登記表上的簡稱（選填，預設用整句）" maxlength="30">' : '')+
+    '</div>';
+  });
+  h += '<div class="sub" style="margin:4px 0 10px">勾選的項目會在 '+nextSchoolLabel(d.date)+' 自動出現在作業登記表。</div>';
+  h += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
+       '<button class="btn sm sky" data-act="add">＋新增一項</button>'+
+       '<button class="btn sm green" data-act="save">儲存這天</button>'+
+       '<span class="stxt" id="st_'+d.date+'">'+(S.dirty[d.date]?'尚未儲存':'')+'</span></div>';
+  return h+'</section>';
+}
+function viewWeek(){
+  if (!S.week) return '<div class="empty-ad">載入中…</div>';
+  const curNotice = (S.board && S.board.notice) ? S.board.notice : '';
+  let h = '<section class="card"><h3>📢 教室黑板便條（聯絡簿置頂提醒）</h3>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+    '<input class="in grow" id="noticeIn" value="'+esc(curNotice)+'" placeholder="例如：週五校外教學記得帶水壺、穿班服" maxlength="120" style="min-width:220px">'+
+    '<button class="btn sm green" data-act="saveNotice">更新便條</button>'+
+    '<button class="btn sm plain" data-act="clearNotice">清除</button></div></section>';
+  const m = S.week.monday, f = addDays(m,4);
+  h += '<div class="weeknav"><button class="btn sm plain" data-act="wprev">◀ 上週</button>'+
+    '<div class="mid">'+md(m)+'（一）～ '+md(f)+'（五）</div>'+
+    '<button class="btn sm plain" data-act="wnext">下週 ▶</button></div>'+
+    '<div class="weekgrid">'+S.week.days.map(dayCard).join('')+'</div>';
+  return h;
+}
+function setStTxt(date, txt){ const el = document.getElementById('st_'+date); if (el) el.textContent = txt; }
+async function saveDay(date){
+  const rows = (S.draft[date]||[]).filter(r=>r.t.trim()).map(r=>({ text:r.t.trim(), check:r.c, short:(r.s||'').trim() }));
+  setStTxt(date,'儲存中…');
+  try {
+    await gs('saveHomework', date, rows);
+    S.dirty[date] = false; S.lastWrite = Date.now(); S.writeSeq++;
+    setStTxt(date,'已儲存 ✓ '+nowTime());
+    fetchBoard(true);
+    return true;
+  } catch(e) { setStTxt(date,'儲存失敗'); handleErr(e); return false; }
+}
+async function saveAllDirty(){
+  const ds = Object.keys(S.dirty).filter(d=>S.dirty[d]);
+  for (const d of ds) await saveDay(d);
+}
+function focusRow(day, i){
+  const el = document.querySelector('.card[data-day="'+day+'"] .lrow[data-i="'+i+'"] input[data-f="t"]');
+  if (el) el.focus();
+}
+
+/* ---------- 分頁二：今日登記批改 ---------- */
+function selectedItem(){
+  const b = S.board; if (!b || !b.items.length) return null;
+  let it = b.items.find(x=>x.source+'|'+x.name === S.sel);
+  if (!it) { it = b.items[0]; S.sel = it.source+'|'+it.name; }
+  return it;
+}
+function renderRegTop(){
+  const el = $('#regTop'); if (!el) return;
+  const b = S.board;
+  if (!b) { el.innerHTML = '<div class="empty-ad">載入中…</div>'; return; }
+  let h = '<section class="card"><h3>今日作業登記 '+md(b.date)+'（'+WD[dow(b.date)]+'）</h3>';
+  if (!b.weekday) {
+    h += '<div class="empty-ad"><svg><use href="#i-moon"/></svg>今天是假日，沒有要登記的作業</div></section>';
+    el.innerHTML = h; return;
+  }
+  h += '<div class="note">自動帶入 <b>'+(b.source?md(b.source)+'（'+WD[dow(b.source)]+'）':'—')+'</b> 聯絡簿勾選的作業項目。</div>';
+  let opts = '<option value="">自動：前一個上課日（'+md(b.srcAuto)+'）</option>';
+  let d = b.date;
+  for (let k=0;k<10;k++){ d = stepSchool(d,-1); opts += '<option value="'+d+'"'+(b.srcOverride && b.source===d?' selected':'')+'>'+md(d)+'（週'+WD[dow(d)]+'）聯絡簿</option>'; }
+  h += '<details style="margin-bottom:12px"><summary class="sub" style="cursor:pointer;min-height:44px;display:flex;align-items:center">遇到放假或補課？更換作業來源日</summary>'+
+       '<select class="in" id="srcSel" style="margin-top:8px">'+opts+'</select></details>';
+  if (!b.items.length) h += '<div class="empty-ad" style="padding:14px"><svg><use href="#i-board"/></svg>目前沒有要檢查的項目<div class="sub">可到「一週排程」勾選前一天的聯絡簿項目，或按下方新增臨時項目</div></div>';
+  else {
+    const sel = selectedItem();
+    h += '<div class="chips">'+b.items.map((it,i)=>{
+      const total = b.students.length;
+      const ok = b.students.filter(s=>{ const t = b.status[skey(it,s.seat)]; return t==='done' || t==='corrected'; }).length;
+      return '<button class="chipsel'+(it===sel?' on':'')+'" data-act="sel" data-i="'+i+'">'+esc(it.name)+(it.temp?' <span class="chip" style="font-size:13px">臨</span>':'')+'<small>已完成 '+ok+' / '+total+'</small></button>';
+    }).join('')+'</div>';
+  }
+  if (S.tempOpen) {
+    h += '<div style="display:flex;gap:8px;flex-wrap:wrap"><input class="in grow" id="tempIn" placeholder="例如：數學考卷簽名、通知單回條" maxlength="40" style="min-width:200px">'+
+         '<button class="btn sm green" data-act="tempgo">新增</button><button class="btn sm plain" data-act="tempno">取消</button></div>';
+  } else {
+    h += '<button class="btn" data-act="tempopen">＋臨時新增今日檢查項目</button>';
+  }
+  const sel2 = selectedItem();
+  if (sel2 && sel2.temp) h += ' <button class="btn sm coral" data-act="tempdel">'+(S.delArm?'再按一次確認刪除':'刪除此臨時項目')+'</button>';
+  h += '</section>';
+  el.innerHTML = h;
+  if (S.tempOpen) { const ti = $('#tempIn'); if (ti) ti.focus(); }
+}
+const MODES = [['done','已完成 ✓'],['unsubmitted','未交（紅號）'],['correction','待訂正（藍號）'],['corrected','訂正完成（藍號打叉）'],['cycle','輪流切換']];
+function renderRegSeats(){
+  const el = $('#regSeats'); if (!el) return;
+  const b = S.board, it = selectedItem();
+  if (!b || !b.weekday || !it) { el.innerHTML = ''; return; }
+  let h = '<section class="card"><h3>「'+esc(it.name)+'」 點座號登記</h3>';
+  h += '<div class="sub">先選一種狀態，再點座號（連點多位會自動合併極速同步）；同一個狀態再點一次＝清除回空白。</div>';
+  h += '<div class="modes">'+MODES.map(m=>'<button class="mode'+(S.mode===m[0]?' on':'')+'" data-act="mode" data-m="'+m[0]+'">'+m[1]+'</button>').join('')+'</div>';
+  h += '<div class="seats">'+b.students.map(s=>{
+    const t = b.status[skey(it,s.seat)] || '';
+    return '<button class="seatbtn" data-act="seat" data-seat="'+s.seat+'"><span class="ic">'+icon(t,s.seat)+'</span>'+
+      '<span class="nmn">'+s.seat+' 號 '+esc(s.name)+'<span class="lbl">'+(LABEL[t]||'未登記')+'</span></span></button>';
+  }).join('')+'</div>';
+  h += '<div class="bulk"><button class="btn green" data-act="allDone">全班已完成</button><button class="btn plain" data-act="allReset">全班清除重設</button></div></section>';
+  el.innerHTML = h;
+}
+function setLocal(it, seat, status){
+  if (status) S.board.status[skey(it,seat)] = status;
+  else delete S.board.status[skey(it,seat)];
+}
+function payload(it, seat, status){ return { due:S.board.date, source:it.source, name:it.name, seat:seat, status:status }; }
+function applyStatuses(it, list){
+  list.forEach(x=>setLocal(it,x[0],x[1]));
+  queueStatusBatch(list.map(x=>payload(it,x[0],x[1])));
+  S.lastJson = '';
+  renderRegTop(); renderRegSeats();
+}
+
+/* ---------- 分頁三：欠交追蹤 ---------- */
+function viewTrack(){
+  const b = S.board; if (!b) return '<div class="empty-ad">載入中…</div>';
+  if (!b.carry.length) return '<section class="card"><div class="empty-ad"><svg><use href="#i-star"/></svg>沒有未結案的欠交，大家都很棒！</div></section>';
+  const total = b.carry.reduce((n,g)=>n+g.entries.length,0);
+  let h = '<div class="note">共 <b>'+total+'</b> 筆未結案（紅號＝未交、藍號＝待訂正）。</div>';
+  b.carry.forEach((g,gi)=>{
+    h += '<section class="card tk"><h3>'+md(g.due)+'（週'+WD[dow(g.due)]+'）'+esc(g.name)+
+         '<span class="sub"> '+(g.source!==g.due?'來自 '+md(g.source)+' 聯絡簿':'臨時項目')+'</span></h3>';
+    g.entries.forEach(e=>{
+      const stu = b.students.find(s=>s.seat===e.seat);
+      h += '<div class="who"><span class="bw" style="--b:42px"><span class="badge '+(e.status==='unsubmitted'?'red':'blue')+'">'+e.seat+'</span></span>'+
+        '<span class="wn">'+esc(stu?stu.name:'')+'<span class="sub"> '+LABEL[e.status]+'</span></span>'+
+        (e.status==='unsubmitted'
+          ? '<button class="btn sm green" data-act="tk" data-g="'+gi+'" data-seat="'+e.seat+'" data-to="done">補交完成 ✓</button><button class="btn sm sky" data-act="tk" data-g="'+gi+'" data-seat="'+e.seat+'" data-to="correction">改待訂正</button>'
+          : '<button class="btn sm green" data-act="tk" data-g="'+gi+'" data-seat="'+e.seat+'" data-to="corrected">訂正完成 ✗</button>')+
+        '</div>';
+    });
+    h += '<div style="margin-top:8px"><button class="btn sm plain" data-act="tkall" data-g="'+gi+'">這一項全部結案</button></div></section>';
+  });
+  return h;
+}
+function tkApply(gi, list){
+  const b = S.board, g = b.carry[gi]; if (!g) return;
+  const it = { source:g.source, name:g.name };
+  list.forEach(x=>{
+    const e = g.entries.find(y=>y.seat===x[0]); if (!e) return;
+    if (x[1]==='done' || x[1]==='corrected') g.entries = g.entries.filter(y=>y!==e);
+    else e.status = x[1];
+  });
+  if (!g.entries.length) b.carry.splice(gi,1);
+  S.lastJson = '';
+  queueStatusBatch(list.map(x=>({ due:g.due, source:it.source, name:it.name, seat:x[0], status:x[1] })));
+  renderAdmin();
+}
+
+/* ---------- 分頁四：額外獎勵抽獎、課堂加減分與積分歸零 ---------- */
+const PT_REASONS = ['發表踴躍','秩序良好','熱心助人','小組合作','提醒扣分'];
+function viewPoints(){
+  const b = S.board; if (!b) return '<div class="empty-ad">載入中…</div>';
+  const sc = b.scoreTotal || {};
+
+  let h = '<section class="card" style="background:#FFF8E1"><h3>🌟 老師額外獎勵：發放星星抽獎機會</h3>';
+  h += '<div class="sub" style="margin-bottom:10px">點選全班或個別學生按鈕後，前台名字後方會<b>重新變回閃亮星星 ⭐</b>，可再次點擊抽獎！</div>';
+  h += '<div style="margin-bottom:12px"><button class="btn green" data-act="grantLottoAll">🌟 全班每人再抽獎一次</button></div>';
+  h += '<div class="seats">';
+  b.students.forEach(s => {
+    const ready = canDraw(s.seat);
+    const drew = (b.lotteryToday && b.lotteryToday[s.seat]) || 0;
+    h += '<button class="seatbtn'+(ready?' picked':'')+'" data-act="grantLotto" data-seat="'+s.seat+'">'+
+      '<span class="nmn">'+s.seat+' 號 '+esc(s.name)+
+      '<span class="lbl">'+(ready ? '⭐ 可抽獎中' : (drew ? '已抽 +'+drew+'分 (點我再抽)' : '點我獎勵抽獎'))+'</span></span></button>';
+  });
+  h += '</div></section>';
+
+  h += '<section class="card"><h3>⭐ 課堂加減分</h3>';
+  h += '<div class="sub" style="margin-bottom:8px">步驟 1：選取學生（可單選或全選）</div>';
+  h += '<div class="chips">';
+  h += '<button class="btn sm plain" data-act="ptAll">全選全班</button>';
+  h += '<button class="btn sm plain" data-act="ptClear">取消全選</button>';
+  h += '</div><div class="seats">';
+  b.students.forEach(s => {
+    const on = S.ptSeats.has(s.seat);
+    h += '<button class="seatbtn'+(on?' picked':'')+'" data-act="ptSeat" data-seat="'+s.seat+'">'+
+      '<span class="nmn">'+s.seat+' 號 '+esc(s.name)+'<span class="lbl">目前 '+(sc[s.seat]||0)+' 分</span></span></button>';
+  });
+  h += '</div>';
+  h += '<div class="sub" style="margin:14px 0 8px">步驟 2：選擇原因並加減分</div>';
+  h += '<div class="chips">' + PT_REASONS.map(r =>
+    '<button class="chk'+(S.ptReason===r?' on':'')+'" data-act="ptRsn" data-r="'+esc(r)+'">'+esc(r)+'</button>'
+  ).join('') + '</div>';
+  h += '<input class="in" id="ptReasonIn" value="'+esc(S.ptReason)+'" placeholder="或自行輸入原因" maxlength="40" style="margin-bottom:12px">';
+  h += '<div class="bulk">' +
+    [1,2,3,5].map(d => '<button class="btn green" data-act="ptGo" data-d="'+d+'">+'+d+' 分</button>').join('') +
+    [-1,-2].map(d => '<button class="btn coral" data-act="ptGo" data-d="'+d+'">'+d+' 分</button>').join('') +
+    '</div>';
+
+  h += '<div style="margin-top:20px;padding-top:14px;border-top:2px dashed rgba(62,58,57,.3)">'+
+    '<button class="btn coral" data-act="resetScores">'+(S.resetArm ? '⚠️ 再按一次確認「清空全班所有積分」' : '🔄 全班積分歸零（重新計算）')+'</button>'+
+    '<div class="sub" style="margin-top:6px">會清空所有加減分與抽獎累計紀錄，讓全班從 0 分重新開始。</div></div>';
+  h += '</section>';
+
+  if (b.pointLogs && b.pointLogs.length) {
+    h += '<section class="card"><h3>📝 最近加減分紀錄</h3>';
+    b.pointLogs.forEach(l => {
+      h += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:2px dotted rgba(62,58,57,.2)">'+
+        '<span><b>'+l.seat+'號 '+esc(l.name)+'</b> · '+esc(l.reason)+'</span>'+
+        '<span style="font-weight:700;color:'+(l.delta>0?'var(--tickgreen)':'var(--red)')+'">'+(l.delta>0?'+'+l.delta:l.delta)+' 分</span></div>';
+    });
+    h += '</section>';
+  }
+
+  return h;
+}
+
+/* =====================================================
+ * 後台事件（事件委派）
+ * ===================================================== */
+const adBody = $('#adBody');
+adBody.addEventListener('input', ev=>{
+  if (ev.target.id === 'ptReasonIn') { S.ptReason = ev.target.value; return; }
+  const row = ev.target.closest('.lrow'); if (!row) return;
+  const day = row.closest('.card').dataset.day, i = +row.dataset.i, f = ev.target.dataset.f;
+  if (!f) return;
+  S.draft[day][i][f === 't' ? 't' : 's'] = ev.target.value;
+  S.dirty[day] = true; setStTxt(day,'尚未儲存');
+});
+adBody.addEventListener('keydown', ev=>{
+  if (ev.key !== 'Enter' || !ev.target.matches('input[data-f="t"]')) return;
+  ev.preventDefault();
+  const row = ev.target.closest('.lrow'), day = row.closest('.card').dataset.day, i = +row.dataset.i;
+  const rows = S.draft[day];
+  if (i === rows.length-1) { rows.push({t:'',c:true,s:''}); renderAdmin(); }
+  focusRow(day, i+1);
+});
+adBody.addEventListener('change', async ev=>{
+  if (ev.target.id === 'srcSel') {
+    try { await gs('setSource', S.board.date, ev.target.value); S.writeSeq++; S.lastJson=''; await fetchBoard(true); renderAdmin(); toast('已更換作業來源'); }
+    catch(e){ handleErr(e); }
+  }
+});
+adBody.addEventListener('click', async ev=>{
+  const btn = ev.target.closest('[data-act]'); if (!btn) return;
+  const act = btn.dataset.act;
+  const card = btn.closest('.card');
+  const day = card && card.dataset.day;
+
+  if (act === 'saveNotice' || act === 'clearNotice') {
+    const val = act === 'clearNotice' ? '' : ($('#noticeIn').value || '').trim();
+    btn.disabled = true;
+    try {
+      await gs('saveNotice', val);
+      S.writeSeq++; S.lastJson = '';
+      await fetchBoard(true);
+      renderAdmin();
+      toast(val ? '已更新黑板便條' : '已清除黑板便條');
+    } catch(e){ handleErr(e); }
+    btn.disabled = false;
+    return;
+  }
+
+  if (act === 'chk') { const i = +btn.closest('.lrow').dataset.i; const r = S.draft[day][i]; r.c = !r.c; S.dirty[day] = true; renderAdmin(); return; }
+  if (act === 'del') { const i = +btn.closest('.lrow').dataset.i; S.draft[day].splice(i,1); if (!S.draft[day].length) S.draft[day].push({t:'',c:true,s:''}); S.dirty[day] = true; renderAdmin(); return; }
+  if (act === 'add') { S.draft[day].push({t:'',c:true,s:''}); renderAdmin(); focusRow(day, S.draft[day].length-1); return; }
+  if (act === 'save') { btn.disabled = true; const ok = await saveDay(day); btn.disabled = false; if (ok) toast('已儲存 '+md(day)); return; }
+  if (act === 'wprev' || act === 'wnext') {
+    await saveAllDirty();
+    try { await loadWeek(addDays(S.week.monday, act==='wprev'?-7:7)); } catch(e){ handleErr(e); }
+    renderAdmin(); return;
+  }
+
+  if (act === 'sel') { await flushStatusBuffer(); const it = S.board.items[+btn.dataset.i]; S.sel = it.source+'|'+it.name; S.delArm = false; renderRegTop(); renderRegSeats(); return; }
+  if (act === 'mode') { S.mode = btn.dataset.m; renderRegSeats(); return; }
+  if (act === 'seat') {
+    const it = selectedItem(); if (!it) return;
+    const seat = +btn.dataset.seat, cur = S.board.status[skey(it,seat)] || '';
+    let nx;
+    if (S.mode === 'cycle') nx = NEXT[cur] !== undefined ? NEXT[cur] : 'done';
+    else nx = (cur === S.mode) ? '' : S.mode;
+    applyStatuses(it, [[seat,nx]]);
+    const nb = $('#regSeats .seatbtn[data-seat="'+seat+'"] .ic'); if (nb) nb.classList.add('pop');
+    return;
+  }
+  if (act === 'allDone' || act === 'allReset') {
+    const it = selectedItem(); if (!it) return;
+    applyStatuses(it, S.board.students.map(s=>[s.seat, act==='allDone'?'done':'']));
+    return;
+  }
+  if (act === 'tempopen') { S.tempOpen = true; renderRegTop(); return; }
+  if (act === 'tempno')   { S.tempOpen = false; renderRegTop(); return; }
+  if (act === 'tempgo') {
+    const name = ($('#tempIn').value||'').trim(); if (!name) { toast('請輸入項目名稱'); return; }
+    btn.disabled = true;
+    try {
+      await flushStatusBuffer();
+      await gs('addTempItem', S.board.date, name);
+      S.writeSeq++; S.lastJson=''; S.tempOpen = false; S.sel = S.board.date+'|'+name;
+      await fetchBoard(true); renderAdmin(); toast('已新增臨時項目');
+    } catch(e) { handleErr(e); btn.disabled = false; }
+    return;
+  }
+  if (act === 'tempdel') {
+    if (!S.delArm) { S.delArm = true; renderRegTop(); setTimeout(()=>{ if (S.delArm) { S.delArm=false; if (S.tab==='register') renderRegTop(); } }, 3500); return; }
+    const it = selectedItem(); S.delArm = false;
+    try { await flushStatusBuffer(); await gs('removeTempItem', S.board.date, it.name); S.writeSeq++; S.sel = null; S.lastJson=''; await fetchBoard(true); renderAdmin(); toast('已刪除臨時項目'); }
+    catch(e){ handleErr(e); }
+    return;
+  }
+
+  if (act === 'tk') { tkApply(+btn.dataset.g, [[+btn.dataset.seat, btn.dataset.to]]); return; }
+  if (act === 'tkall') {
+    const g = S.board.carry[+btn.dataset.g]; if (!g) return;
+    tkApply(+btn.dataset.g, g.entries.map(e=>[e.seat, e.status==='unsubmitted'?'done':'corrected']));
+    return;
+  }
+
+  if (act === 'grantLotto') {
+    const seat = +btn.dataset.seat;
+    btn.disabled = true;
+    try {
+      const res = await gs('grantExtraLottery', seat);
+      S.writeSeq++; S.lastJson = '';
+      await fetchBoard(true);
+      renderAdmin();
+      toast('⭐ 已發放抽獎機會給 ' + seat + ' 號 ' + (res.name || '') + '！');
+    } catch(e){ handleErr(e); }
+    btn.disabled = false;
+    return;
+  }
+  if (act === 'grantLottoAll') {
+    btn.disabled = true;
+    try {
+      const res = await gs('grantAllExtraLottery');
+      S.writeSeq++; S.lastJson = '';
+      await fetchBoard(true);
+      renderAdmin();
+      toast('🌟 已給予全班 ' + (res.count || '') + ' 位同學再抽獎一次！');
+    } catch(e){ handleErr(e); }
+    btn.disabled = false;
+    return;
+  }
+
+  if (act === 'ptSeat') { const s = +btn.dataset.seat; S.ptSeats.has(s)?S.ptSeats.delete(s):S.ptSeats.add(s); renderAdmin(); return; }
+  if (act === 'ptAll') { S.board.students.forEach(s=>S.ptSeats.add(s.seat)); renderAdmin(); return; }
+  if (act === 'ptClear') { S.ptSeats.clear(); renderAdmin(); return; }
+  if (act === 'ptRsn') { S.ptReason = btn.dataset.r; renderAdmin(); return; }
+  if (act === 'ptGo') {
+    if (!S.ptSeats.size) { toast('請先點選要加減分的學生'); return; }
+    const delta = +btn.dataset.d;
+    const reason = ($('#ptReasonIn').value || '').trim() || S.ptReason;
+    btn.disabled = true;
+    try {
+      await gs('addPoints', [...S.ptSeats], delta, reason);
+      S.ptSeats.clear(); S.writeSeq++; S.lastJson = '';
+      await fetchBoard(true); renderAdmin();
+      toast('已記錄 '+(delta>0?'+'+delta:delta)+' 分！');
+    } catch(e){ handleErr(e); }
+    btn.disabled = false;
+    return;
+  }
+  if (act === 'resetScores') {
+    if (!S.resetArm) {
+      S.resetArm = true;
+      renderAdmin();
+      setTimeout(() => { if (S.resetArm) { S.resetArm = false; if (S.tab === 'points') renderAdmin(); } }, 4000);
+      return;
+    }
+    S.resetArm = false;
+    btn.disabled = true;
+    try {
+      await gs('resetAllScores');
+      S.ptSeats.clear(); S.writeSeq++; S.lastJson = '';
+      await fetchBoard(true); renderAdmin();
+      toast('🔄 全班積分已全部歸零！');
+    } catch(e){ handleErr(e); }
+    btn.disabled = false;
+    return;
+  }
+});
+
+renderLegend();
+const hasSnap = bootFromLocalSnap();
+fetchBoard(!hasSnap);
+</script>
+</body>
+</html>
