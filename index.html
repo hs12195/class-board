@@ -6,7 +6,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="教室聯絡簿">
-<script>try{var _t=localStorage.getItem("CLASS_BOARD_THEME");if(_t)document.documentElement.setAttribute("data-theme",_t)}catch(e){}</script>
 <title>教室聯絡簿</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -302,6 +301,28 @@ svg{display:block}
 .fish-btn.caught{animation:none;transform:scale(1.22);background:#FFFDF5;border-color:var(--red);color:var(--red);font-weight:700;z-index:3}
 .fish-btn.dim{opacity:.48}
 
+
+/* ---------- 全班抽籤點名活動 ---------- */
+.sky-icons{cursor:pointer;border-radius:14px;padding:2px 6px;transition:transform .12s}
+.sky-icons:active{transform:scale(.92)}
+.pick-stage{min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:8px auto 12px}
+.pick-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:390px}
+.pcard{aspect-ratio:3/4;border:var(--bd);border-radius:18px;background:linear-gradient(145deg,#EBF6FC,#A8D3E6);box-shadow:4px 4px 0 var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px;transition:transform .15s}
+.pcard:hover:not(:disabled){transform:translateY(-5px)}
+.pcard.picked{background:#FFFDF5;border-color:var(--red);transform:scale(1.06)}
+.pcard.dim{opacity:.5;background:#F3EFE6}
+.pcard .pseat{font-size:28px;font-weight:700;color:var(--red);line-height:1}
+.pcard .pname{font-size:19px;font-weight:700;color:var(--ink)}
+.tube-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+.tube-box{position:relative;width:110px;height:140px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.tube-body{width:84px;height:96px;background:var(--coral);border:var(--bd);border-radius:12px 12px 18px 18px;box-shadow:4px 4px 0 var(--ink);display:grid;place-items:center;font-size:22px;font-weight:700;color:#FFF;z-index:2}
+.tube-stick{position:absolute;bottom:76px;width:36px;height:68px;background:var(--yellow);border:var(--bd);border-radius:10px 10px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:6px;font-weight:700;font-size:16px;transition:transform .45s cubic-bezier(.3,1.5,.5,1);z-index:1}
+.tube-box.shake{animation:pop .4s ease-in-out 2}
+.tube-stick.out{transform:translateY(-42px);background:#FFFDF5;border-color:var(--red);color:var(--red);width:120px;height:64px;border-radius:14px;z-index:3;align-items:center;padding:0;box-shadow:3px 3px 0 var(--ink)}
+.pick-winner{margin-top:8px;padding:12px 20px;border:var(--bd);border-radius:18px;background:#FFF3C4;box-shadow:3px 3px 0 var(--ink);animation:pop .4s cubic-bezier(.3,1.6,.5,1)}
+.pick-winner .pw-seat{font-size:22px;font-weight:700;color:var(--navy)}
+.pick-winner .pw-name{font-size:34px;font-weight:700;color:var(--red);margin-top:2px}
+
 /* 排行榜 */
 .rank-list{display:flex;flex-direction:column;gap:8px}
 .rank-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px solid var(--ink);border-radius:14px;background:var(--paper);font-size:19px}
@@ -319,7 +340,7 @@ body.admin-open{overflow:hidden}
 .ad-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:6px 0}
 .ad-head h2{display:flex;align-items:center;gap:10px;font-size:28px;margin-right:auto}
 .ad-head h2 svg{width:44px;height:44px}
-.tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:8px 0;background:var(--paper)}
+.tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px 0;background:var(--paper)}
 .tab{min-height:60px;padding:6px;border:var(--bd);border-radius:16px;background:var(--card);font-size:17px;line-height:1.2}
 .tab.on{background:var(--yellow);box-shadow:3px 3px 0 var(--ink)}
 .tab small{display:block;font-size:12px;opacity:.75}
@@ -368,50 +389,6 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
   .seats{grid-template-columns:repeat(2,1fr)}
 }
 
-/* ---------- 後台：版面外觀卡片 ---------- */
-.themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
-.themecard{padding:12px;border:var(--bd);border-radius:18px;background:var(--card);box-shadow:3px 3px 0 var(--ink);text-align:left}
-.themecard.on{background:#FFF3C4;border-color:var(--navy)}
-.themecard:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
-
-/* =====================================================================
- * 版面主題（後台 #admin 與彈窗 .modal 固定使用預設色票，只換前台大螢幕）
- * ===================================================================== */
-/* ── 傳統黑板 ── */
-[data-theme="chalk"]{
-  --paper:#4B3526; --card:#2F4B3F; --ink:#F3F0E6; --inkrgb:243,240,230;
-  --coral:#A9564D; --yellow:#8C7B2F; --sky:#3F6F7D; --green:#4A7352;
-  --red:#E0685D; --navy:#FFFFFF; --tickgreen:#9BE07A;
-  --th:#3B5C4D; --odd:#35544A; --notice:#5A3F39; --hl:#6E6530;
-  --bd:2px solid rgba(243,240,230,.7); --r:8px; --shadow:0 4px 0 rgba(0,0,0,.35);
-}
-[data-theme="chalk"] #front{text-shadow:0 0 1px rgba(255,255,255,.3)}
-[data-theme="chalk"] .panel{
-  border:7px solid #A87B52;border-radius:8px;
-  background:radial-gradient(ellipse at 30% 20%,#3A5B4D,#2A4338);
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.25),inset 0 0 60px rgba(0,0,0,.3),0 5px 0 rgba(0,0,0,.4)}
-[data-theme="chalk"] .nm{background:transparent}
-[data-theme="chalk"] .nm.odd{background:var(--odd)}
-[data-theme="chalk"] .navbtn,[data-theme="chalk"] .tbtn,[data-theme="chalk"] .ctag{box-shadow:2px 2px 0 rgba(0,0,0,.45)}
-[data-theme="chalk"] .cg{background:rgba(0,0,0,.18)}
-[data-theme="chalk"] .tick path:first-child{stroke:#1d2d26}
-
-/* ── 日式無印 ── */
-[data-theme="muji"]{
-  --paper:#F6F4EF; --card:#FFFFFF; --ink:#3B3A37; --inkrgb:59,58,55;
-  --coral:#E3CBC3; --yellow:#E8DEC8; --sky:#D7DFE2; --green:#DCE2D2;
-  --red:#B5524A; --navy:#3E5560; --tickgreen:#7E9C6E;
-  --th:#EFEBE2; --odd:#FAF8F3; --notice:#F4ECE6; --hl:#EFE5CC;
-  --bd:1px solid #CFCABF; --r:6px; --shadow:none;
-  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Huninn',sans-serif;
-}
-[data-theme="muji"] #front *{box-shadow:none}
-[data-theme="muji"] #front :is(.tbtn,.chip,.cg,.star-done,.ctag,.navbtn,.tmp,.notice-bar .ntag){border-width:1px}
-[data-theme="muji"] #front :is(.badge,.nm .no){border-width:1.5px}
-[data-theme="muji"] #front :is(.th,.dt,h1){font-weight:500}
-[data-theme="muji"] .sky-icons{display:none}
-[data-theme="muji"] :is(.hicon,.deco,.empty svg){filter:grayscale(.85);opacity:.8}
-[data-theme="muji"] .vbox li{border-left-style:solid;border-left-width:1px}
 </style>
 </head>
 <body>
@@ -529,7 +506,7 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
       </div>
       <div class="rfoot">
         <span><i class="sw"></i>黃底＝明天要交的作業</span>
-        <span class="sky-icons">
+        <span class="sky-icons" id="skyPickBtn" title="連點兩下開始全班抽籤">
           <svg aria-hidden="true"><use href="#i-cloud"/></svg>
           <svg aria-hidden="true"><use href="#i-bird"/></svg>
           <svg aria-hidden="true"><use href="#i-star"/></svg>
@@ -571,6 +548,17 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
   </div>
 </div>
 
+<!-- ============ 全班抽籤點名活動視窗 ============ -->
+<div class="overlay" id="pickOv" role="dialog" aria-modal="true" aria-labelledby="pickTtl">
+  <div class="modal lotto-box">
+    <h2 id="pickTtl">🎲 全班幸運抽籤點名</h2>
+    <div class="lotto-who" id="pickModeTag">隨機模式</div>
+    <div class="pick-stage" id="pickStage"></div>
+    <div class="lotto-msg" id="pickMsg"></div>
+    <div id="pickActions" class="row2" style="flex-wrap:wrap"></div>
+  </div>
+</div>
+
 <!-- ============ 老師後台 ============ -->
 <div id="admin">
   <div class="ad-wrap">
@@ -585,7 +573,6 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
       <button class="tab" data-tab="track">欠交追蹤<small>跨日未結案</small></button>
       <button class="tab" data-tab="points">獎勵與積分<small>再抽獎與加減分</small></button>
       <button class="tab" data-tab="roster">班級名單<small>設定座號與姓名</small></button>
-      <button class="tab" data-tab="theme">版面外觀<small>黑板・無印・手繪</small></button>
     </nav>
     <div id="adBody"></div>
   </div>
@@ -608,15 +595,6 @@ const WD = ['日','一','二','三','四','五','六'];
 const LABEL = { unsubmitted:'未交', done:'已完成', correction:'待訂正', corrected:'訂正完成' };
 const NEXT  = { '':'done', done:'unsubmitted', unsubmitted:'correction', correction:'corrected', corrected:'' };
 const POLL_MS = 12000;
-const THEME_IDS = ['doodle', 'chalk', 'muji'];
-const LS_THEME_KEY = 'CLASS_BOARD_THEME';
-function applyTheme(t){
-  if (THEME_IDS.indexOf(t) < 0) t = 'doodle';
-  const root = document.documentElement;
-  if (root.getAttribute('data-theme') !== t) { root.setAttribute('data-theme', t); setTimeout(fitVertical, 80); }
-  try { localStorage.setItem(LS_THEME_KEY, t); } catch(e){}
-}
-
 /* 台灣時區今日 YYYY-MM-DD */
 function getTodayTaipei(){
   const now = new Date();
@@ -698,20 +676,20 @@ async function fbGet(path){
 async function fbGetBoardData(date){
   const d = date || getTodayTaipei();
   const r = await Promise.all([
-    fbGet('students'), fbGet('notice'), fbGet('theme'), fbGet('scores'), fbGet('pointLogs'), fbGet('carry'),
+    fbGet('students'), fbGet('notice'), fbGet('scores'), fbGet('pointLogs'), fbGet('carry'),
     fbGet('sourceOverrides/' + d), fbGet('homework/' + d), fbGet('tempItems/' + d),
     fbGet('status/' + d), fbGet('lottery/' + d), fbGet('lotteryQuota/' + d)
   ]);
-  const srcOv = r[6], hwDate = r[7];
+  const srcOv = r[5], hwDate = r[6];
   const src = srcOv || stepSchool(d, -1);
   const hwSrc = (src === d) ? hwDate : await fbGet('homework/' + src);
   const raw = {
-    students: r[0], notice: r[1], theme: r[2], scores: r[3], pointLogs: r[4], carry: r[5],
+    students: r[0], notice: r[1], scores: r[2], pointLogs: r[3], carry: r[4],
     sourceOverrides: {}, homework: {}, tempItems: {}, status: {}, lottery: {}, lotteryQuota: {}
   };
   if (srcOv) raw.sourceOverrides[d] = srcOv;
   raw.homework[d] = hwDate; raw.homework[src] = hwSrc;
-  raw.tempItems[d] = r[8]; raw.status[d] = r[9]; raw.lottery[d] = r[10]; raw.lotteryQuota[d] = r[11];
+  raw.tempItems[d] = r[7]; raw.status[d] = r[8]; raw.lottery[d] = r[9]; raw.lotteryQuota[d] = r[10];
   return raw;
 }
 
@@ -851,7 +829,6 @@ function buildBoardFromDb(rawDb, targetDate){
   return {
     today, date, weekday, source, srcAuto, srcOverride,
     notice: String((rawDb && rawDb.notice) || ''),
-    theme: String((rawDb && rawDb.theme) || 'doodle'),
     students, lines, items, status, carry,
     lotteryToday, lotteryUsedCount, lotteryExtraQuota,
     scoreTotal,
@@ -1008,13 +985,6 @@ async function gs(fn){
   if (fn === 'saveStudents') {
     const list = args[0] || [];
     await fbPut('students', list);
-    return { ok: true };
-  }
-
-  if (fn === 'saveTheme') {
-    const t = String(args[0] || 'doodle');
-    if (THEME_IDS.indexOf(t) < 0) throw new Error('未知的版面模式');
-    await fbPut('theme', t);
     return { ok: true };
   }
 
@@ -1181,7 +1151,6 @@ function fitVertical(){
 window.addEventListener('resize', ()=>{ fitVertical(); });
 
 function renderAll(){
-  if (S.board && S.board.theme) applyTheme(S.board.theme);
   renderDate(); renderLeft(); renderRight();
   if (S.adminOpen) adminRefresh();
 }
@@ -1733,6 +1702,215 @@ $('#lottoGame').addEventListener('click', async ev=>{
   }
 });
 
+
+/* =====================================================
+ * 連點右下角天空插圖兩下 -> 全班隨機抽籤點名活動（樂透滾球 / 抽籤 / 翻牌）
+ * ===================================================== */
+const PickState = {
+  busy: false,
+  mode: 0,       // 0: 樂透滾球, 1: 幸運抽籤筒, 2: 翻牌點點名
+  winner: null,  // { seat, name }
+  rewarded: false,
+  history: new Set() // 記錄本輪已抽過的座號，優先抽未抽過的同學
+};
+
+function drawRandomStudent(){
+  const b = S.board;
+  if (!b || !b.students || !b.students.length) return null;
+  let pool = b.students.filter(s => !PickState.history.has(s.seat));
+  if (!pool.length) {
+    PickState.history.clear();
+    pool = b.students.slice();
+  }
+  const chosen = pool[Math.floor(Math.random() * pool.length)];
+  PickState.history.add(chosen.seat);
+  return chosen;
+}
+
+function openClassPick(){
+  const b = S.board;
+  if (!b || !b.students || !b.students.length) {
+    toast('尚未設定班級名單，無法抽籤');
+    return;
+  }
+  PickState.busy = false;
+  PickState.winner = null;
+  PickState.rewarded = false;
+  PickState.mode = Math.floor(Math.random() * 3);
+
+  const stage = $('#pickStage');
+  const msg = $('#pickMsg');
+  const acts = $('#pickActions');
+
+  if (PickState.mode === 0) {
+    $('#pickTtl').textContent = '🔮 樂透滾球抽點名';
+    $('#pickModeTag').textContent = '模式：幸運樂透機';
+    stage.innerHTML =
+      '<div class="wheel-wrap" style="margin:0">'+
+        '<div class="wheel-drum" id="pickDrum">'+
+          '<span class="mini-b b1">1</span><span class="mini-b b2">8</span>'+
+          '<span class="mini-b b3">15</span><span class="mini-b b4">⭐</span>'+
+        '</div>'+
+        '<div class="wheel-chute" id="pickChute">'+
+          '<button type="button" class="btn green" id="pickRollBtn">轉動滾出幸運球 ✨</button>'+
+        '</div>'+
+      '</div>';
+    msg.textContent = '按下按鈕轉動樂透機，看看哪位同學被抽中！';
+  } else if (PickState.mode === 1) {
+    $('#pickTtl').textContent = '🎋 幸運抽籤筒點名';
+    $('#pickModeTag').textContent = '模式：神祕抽籤筒';
+    stage.innerHTML =
+      '<div class="tube-wrap">'+
+        '<div class="tube-box" id="pickTube">'+
+          '<div class="tube-stick" id="pickStick">？</div>'+
+          '<div class="tube-body">幸運籤</div>'+
+        '</div>'+
+        '<button type="button" class="btn green" id="pickDrawStickBtn">搖一搖抽籤 🎋</button>'+
+      '</div>';
+    msg.textContent = '點擊「搖一搖抽籤」，抽出幸運上台回答的同學！';
+  } else {
+    $('#pickTtl').textContent = '🃏 翻牌點點名';
+    $('#pickModeTag').textContent = '模式：三選一翻牌';
+    const cardIcons = ['#i-bird', '#i-boat', '#i-star'];
+    stage.innerHTML =
+      '<div class="pick-cards">' + [0,1,2].map(i =>
+        '<button type="button" class="pcard" data-pcard="'+i+'">'+
+          '<svg style="width:52px;height:52px" aria-hidden="true"><use href="'+cardIcons[i]+'"/></svg>'+
+          '<span style="font-size:18px;font-weight:700">第 '+(i+1)+' 張</span>'+
+        '</button>'
+      ).join('') + '</div>';
+    msg.textContent = '請點選一張卡片翻開幸運同學！';
+  }
+
+  acts.innerHTML =
+    '<button type="button" class="btn sky sm" id="pickSwitchMode">換一種玩法</button>'+
+    '<button type="button" class="btn plain grow" id="pickCloseBtn">關閉</button>';
+  $('#pickOv').classList.add('show');
+}
+
+function showPickWinnerActions(stu){
+  PickState.winner = stu;
+  $('#pickMsg').innerHTML = '🎉 恭喜 <b>' + stu.seat + ' 號 ' + esc(stu.name) + '</b> 中籤！';
+  $('#pickActions').innerHTML =
+    '<button type="button" class="btn green grow" id="pickCorrectBtn">⭕ 回答正確！抽 +1～+3 分</button>'+
+    '<button type="button" class="btn sky sm" id="pickAgainBtn">再抽一位</button>'+
+    '<button type="button" class="btn plain sm" id="pickCloseBtn">關閉</button>';
+}
+
+let skyTapCnt = 0, skyTapTimer = null;
+$('#skyPickBtn').addEventListener('click', ()=>{
+  skyTapCnt++;
+  clearTimeout(skyTapTimer);
+  if (skyTapCnt >= 2) {
+    skyTapCnt = 0;
+    openClassPick();
+  } else {
+    skyTapTimer = setTimeout(()=>{ skyTapCnt = 0; }, 700);
+  }
+});
+
+$('#pickStage').addEventListener('click', async ev=>{
+  if (PickState.busy || PickState.winner) return;
+
+  /* 模式 0：樂透滾球 */
+  if (ev.target.closest('#pickRollBtn')) {
+    PickState.busy = true;
+    const btn = $('#pickRollBtn'); btn.disabled = true;
+    const drum = $('#pickDrum'); drum.classList.add('spinning');
+    $('#pickMsg').textContent = '樂透滾球轉動中…';
+    await new Promise(r => setTimeout(r, 950));
+    drum.classList.remove('spinning');
+    const stu = drawRandomStudent();
+    $('#pickChute').innerHTML =
+      '<div class="pick-winner"><div class="pw-seat">'+stu.seat+' 號</div><div class="pw-name">'+esc(stu.name)+'</div></div>';
+    PickState.busy = false;
+    showPickWinnerActions(stu);
+    return;
+  }
+
+  /* 模式 1：抽籤筒 */
+  if (ev.target.closest('#pickDrawStickBtn')) {
+    PickState.busy = true;
+    const btn = $('#pickDrawStickBtn'); btn.disabled = true;
+    const tube = $('#pickTube'); tube.classList.add('shake');
+    $('#pickMsg').textContent = '喀啦喀啦搖籤筒中…';
+    await new Promise(r => setTimeout(r, 750));
+    tube.classList.remove('shake');
+    const stu = drawRandomStudent();
+    const stick = $('#pickStick');
+    stick.innerHTML = '<div style="text-align:center;line-height:1.2"><div style="font-size:15px">'+stu.seat+'號</div><div style="font-size:21px">'+esc(stu.name)+'</div></div>';
+    stick.classList.add('out');
+    PickState.busy = false;
+    showPickWinnerActions(stu);
+    return;
+  }
+
+  /* 模式 2：翻牌 */
+  const cardBtn = ev.target.closest('[data-pcard]');
+  if (cardBtn) {
+    PickState.busy = true;
+    const pickedIdx = +cardBtn.dataset.pcard;
+    const allCards = [...document.querySelectorAll('.pcard')];
+    allCards.forEach(b => b.disabled = true);
+    cardBtn.classList.add('picked');
+    $('#pickMsg').textContent = '翻開卡片中…';
+    await new Promise(r => setTimeout(r, 420));
+    const stu = drawRandomStudent();
+    const otherPool = S.board.students.filter(s => s.seat !== stu.seat).sort(() => Math.random() - 0.5);
+    let oi = 0;
+    allCards.forEach((b, idx) => {
+      if (idx === pickedIdx) {
+        b.innerHTML = '<div class="pseat">'+stu.seat+' 號</div><div class="pname">'+esc(stu.name)+'</div>';
+      } else {
+        b.classList.add('dim');
+        const os = otherPool[oi++] || stu;
+        b.innerHTML = '<div style="font-size:18px;font-weight:700">'+os.seat+' 號</div><div style="font-size:15px">'+esc(os.name)+'</div>';
+      }
+    });
+    PickState.busy = false;
+    showPickWinnerActions(stu);
+  }
+});
+
+$('#pickActions').addEventListener('click', async ev=>{
+  if (PickState.busy) return;
+
+  if (ev.target.closest('#pickCloseBtn')) {
+    $('#pickOv').classList.remove('show');
+    return;
+  }
+  if (ev.target.closest('#pickSwitchMode') || ev.target.closest('#pickAgainBtn')) {
+    openClassPick();
+    return;
+  }
+  if (ev.target.closest('#pickCorrectBtn')) {
+    const stu = PickState.winner;
+    if (!stu || PickState.rewarded) return;
+    PickState.busy = true;
+    PickState.rewarded = true;
+    const btn = $('#pickCorrectBtn');
+    btn.disabled = true;
+    btn.textContent = '🎲 正在抽取 +1～+3 分…';
+
+    const pts = Math.floor(Math.random() * 3) + 1;
+    try {
+      await gs('addPoints', [stu.seat], pts, '🎲 抽籤回答正確');
+      if (!S.board.scoreTotal) S.board.scoreTotal = {};
+      S.board.scoreTotal[stu.seat] = Number(S.board.scoreTotal[stu.seat] || 0) + pts;
+      S.writeSeq++; S.lastJson = '';
+      saveLocalSnap(JSON.stringify(S.board));
+      $('#pickMsg').innerHTML = '🌟 太棒了！<b>' + stu.seat + ' 號 ' + esc(stu.name) + '</b> 獲得 <b style="color:var(--red);font-size:24px">+' + pts + ' 分</b>！<br>目前總積分：<b>' + S.board.scoreTotal[stu.seat] + ' 分</b>';
+      btn.textContent = '✅ 已加 +' + pts + ' 分';
+    } catch(e) {
+      PickState.rewarded = false;
+      btn.disabled = false;
+      btn.textContent = '⭕ 回答正確！抽 +1～+3 分';
+      handleErr(e);
+    }
+    PickState.busy = false;
+  }
+});
+
 /* =====================================================
  * 連點上方插圖的鉛筆三下 -> 直接開啟老師後台
  * ===================================================== */
@@ -1807,7 +1985,6 @@ function renderAdmin(){
   else if (S.tab === 'register') { body.innerHTML = '<div id="regTop"></div><div id="regSeats"></div>'; renderRegTop(); renderRegSeats(); }
   else if (S.tab === 'track') body.innerHTML = viewTrack();
   else if (S.tab === 'points') body.innerHTML = viewPoints();
-  else if (S.tab === 'theme') body.innerHTML = viewTheme();
   else body.innerHTML = viewRoster();
 }
 
@@ -2046,32 +2223,6 @@ function viewPoints(){
 }
 
 /* ---------- 分頁五：班級名單設定（直接存 Firebase，免用試算表） ---------- */
-const THEMES = [
-  { id:'doodle', name:'可愛手繪插圖', desc:'粗框線、馬卡龍色塊、插畫小圖示（預設）', bg:'#FFFCF6', panel:'#FFFEFA', bar:'#A8D3E6', ink:'#3E3A39', dots:['#F2A497','#F6D27A','#B9DAA5'], radius:14, bw:3 },
-  { id:'chalk',  name:'傳統黑板',     desc:'墨綠黑板、木頭邊框、粉筆白字', bg:'#4B3526', panel:'#2F4B3F', bar:'#3F6F7D', ink:'#F3F0E6', frame:'#A87B52', dots:['#E0685D','#E8D26A','#9BE07A'], radius:6, bw:5 },
-  { id:'muji',   name:'日式無印',     desc:'米白底、極細線條、低彩度自然色', bg:'#F6F4EF', panel:'#FFFFFF', bar:'#D7DFE2', ink:'#3B3A37', dots:['#B5524A','#E8DEC8','#7E9C6E'], radius:4, bw:1 }
-];
-function viewTheme(){
-  const cur = (S.board && S.board.theme) || 'doodle';
-  let h = '<section class="card"><h3>🎨 教室大螢幕版面模式</h3>'+
-    '<div class="note">選一種風格，教室大螢幕會在幾秒內自動換上（設定存在 Firebase，所有裝置同步）。後台與抽獎視窗維持手繪風，確保好讀。</div>'+
-    '<div class="themes">';
-  THEMES.forEach(t => {
-    const on = t.id === cur, bw2 = Math.min(t.bw, 2);
-    h += '<button type="button" class="themecard'+(on?' on':'')+'" data-act="theme" data-t="'+t.id+'">'+
-      '<div style="background:'+t.bg+';padding:12px;border-radius:10px;border:2px solid rgba(0,0,0,.12);margin-bottom:10px">'+
-        '<div style="background:'+t.panel+';border:'+t.bw+'px solid '+(t.frame||t.ink)+';border-radius:'+t.radius+'px;overflow:hidden">'+
-          '<div style="background:'+t.bar+';height:22px;border-bottom:'+bw2+'px solid '+t.ink+'"></div>'+
-          '<div style="padding:8px;display:flex;gap:6px;align-items:center">'+
-            t.dots.map(c => '<span style="width:18px;height:18px;border-radius:'+(t.id==='muji'?'3px':'28%')+';background:'+c+';border:'+bw2+'px solid '+t.ink+'"></span>').join('')+
-            '<span style="flex:1;height:6px;border-radius:3px;background:'+t.ink+';opacity:.35"></span>'+
-          '</div></div></div>'+
-      '<b style="font-size:21px">'+t.name+'</b>'+(on?' <span class="chip">使用中 ✓</span>':'')+
-      '<div class="sub">'+t.desc+'</div></button>';
-  });
-  return h + '</div></section>';
-}
-
 function viewRoster(){
   const stus = (S.board && S.board.students) || [];
   const lines = stus.map(s => s.seat + ' ' + s.name).join('\n');
@@ -2113,18 +2264,6 @@ adBody.addEventListener('click', async ev=>{
   const act = btn.dataset.act;
   const card = btn.closest('.card');
   const day = card && card.dataset.day;
-
-  if (act === 'theme') {
-    const t = btn.dataset.t, meta = THEMES.find(x => x.id === t);
-    try {
-      await gs('saveTheme', t);
-      applyTheme(t); if (S.board) S.board.theme = t;
-      S.writeSeq++; S.lastJson = '';
-      renderAdmin();
-      toast('已切換版面：' + (meta ? meta.name : t));
-    } catch(e){ handleErr(e); }
-    return;
-  }
 
   if (act === 'saveRoster') {
     const raw = ($('#rosterTxt').value || '').trim();
