@@ -6,31 +6,42 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="教室聯絡簿">
+<script>try{var _t=localStorage.getItem("CLASS_BOARD_THEME");if(_t)document.documentElement.setAttribute("data-theme",_t)}catch(e){}</script>
 <title>教室聯絡簿</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <script>
 /* =====================================================================
  * 【外掛擴充模組設定】
  * ===================================================================== */
 const PLUGIN_URL = 'https://raw.githubusercontent.com/hs12195/class-board-plugins/main/lotto-plugins.js';
+/* 外掛檔的 SHA-256。雜湊不符時會拒絕載入（防止 GitHub 檔案被竄改後在教室頁面執行）。
+ * 你自己更新 lotto-plugins.js 後，請重新執行 patch 或把這裡換成新的雜湊值；留空字串＝不檢查。 */
+const PLUGIN_SHA256 = 'b4fbc47659bc82cfa81d8e73448ea5aa81dbc710eacc3b58e65fab554531b744';
 window.LOTTO_PLUGINS = [];
-if (PLUGIN_URL) {
-  fetch(PLUGIN_URL)
-    .then(res => {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.text();
-    })
-    .then(code => {
-      (new Function(code))();
-      console.log('✅ 外部遊戲載入成功，共', window.LOTTO_PLUGINS.length, '款');
-    })
-    .catch(err => console.log('無外部擴充模組，使用內建模式', err));
-}
+(async function () {
+  if (!PLUGIN_URL) return;
+  try {
+    const res = await fetch(PLUGIN_URL, { cache: 'no-cache' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const code = await res.text();
+    if (PLUGIN_SHA256) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(code));
+      const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      if (hex !== PLUGIN_SHA256.toLowerCase()) throw new Error('外掛雜湊值不符，已拒絕載入');
+    }
+    (new Function(code))();
+    console.log('✅ 外部遊戲載入成功，共', window.LOTTO_PLUGINS.length, '款');
+  } catch (err) {
+    window.LOTTO_PLUGINS.length = 0;
+    console.log('無外部擴充模組，使用內建模式', err);
+  }
+})();
 </script>
 <style>
-:root{
+:root,#admin,.modal{
+  --th:#FFF3D1; --odd:#FFF7E6; --notice:#FDEBE6; --hl:#FBE7B0; --inkrgb:62,58,57;
   --paper:#FFFCF6; --card:#FFFEFA; --ink:#3E3A39;
   --coral:#F2A497; --yellow:#F6D27A; --sky:#A8D3E6; --green:#B9DAA5;
   --red:#D9453D; --navy:#14456A; --tickgreen:#6DB04F;
@@ -83,21 +94,21 @@ svg{display:block}
   grid-template-columns:minmax(150px,1.35fr) repeat(var(--cols),minmax(120px,1fr));
   grid-template-rows:auto repeat(var(--rows),minmax(68px,1fr));
   overflow:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
-.th{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:center;text-align:center;padding:1vh .6vw;background:#FFF3D1;border-bottom:var(--bd);border-left:2px solid rgba(62,58,57,.35);font-size:clamp(16px,2.7vh,32px);line-height:1.25;font-weight:700;word-break:break-word}
+.th{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:center;text-align:center;padding:1vh .6vw;background:var(--th);border-bottom:var(--bd);border-left:2px solid rgba(var(--inkrgb),.35);font-size:clamp(16px,2.7vh,32px);line-height:1.25;font-weight:700;word-break:break-word}
 .th.corner{left:0;z-index:4;justify-content:flex-start;padding:1vh .8vw;border-left:0;background:var(--green);font-size:clamp(15px,2.4vh,28px)}
 .dense .th{font-size:clamp(14px,2.2vh,26px)}
 .tmp{font-style:normal;margin-left:.3em;padding:0 .35em;border:2px solid var(--ink);border-radius:8px;background:var(--coral);font-size:.7em}
-.nm{position:sticky;left:0;z-index:2;display:flex;align-items:center;gap:.5vw;padding:0 .8vw;border-bottom:2px solid rgba(62,58,57,.22);font-size:clamp(16px,2.9vh,34px);white-space:nowrap;overflow:hidden;border-top:0;border-left:0;border-right:0;background:var(--card);text-align:left;width:100%}
-.nm.odd{background:#FFF7E6}
+.nm{position:sticky;left:0;z-index:2;display:flex;align-items:center;gap:.5vw;padding:0 .8vw;border-bottom:2px solid rgba(var(--inkrgb),.22);font-size:clamp(16px,2.9vh,34px);white-space:nowrap;overflow:hidden;border-top:0;border-left:0;border-right:0;background:var(--card);text-align:left;width:100%}
+.nm.odd{background:var(--odd)}
 .nm .no{display:grid;place-items:center;flex:none;min-width:1.55em;height:1.55em;padding:0 .2em;border:2px solid var(--ink);border-radius:50%;background:var(--paper);font-size:.82em;line-height:1}
 .nm .sname{overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
 .nm-btn{cursor:pointer}
-.nm-btn:hover{background:#FFF3D1}
+.nm-btn:hover{background:var(--th)}
 .nm-btn:active{transform:scale(.97)}
-.star-ic{width:1.15em;height:1.15em;flex:none;animation:twinkle 1.6s ease-in-out infinite;filter:drop-shadow(1px 1px 0 rgba(62,58,57,.4))}
+.star-ic{width:1.15em;height:1.15em;flex:none;animation:twinkle 1.6s ease-in-out infinite;filter:drop-shadow(1px 1px 0 rgba(var(--inkrgb),.4))}
 .star-done{flex:none;display:inline-flex;align-items:center;gap:.15em;padding:.08em .42em;border:2px solid var(--ink);border-radius:999px;background:var(--yellow);font-size:.58em;font-weight:700;line-height:1.2}
-.cell{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;padding:0;border:0;border-bottom:2px solid rgba(62,58,57,.22);border-left:2px solid rgba(62,58,57,.2);background:transparent}
-.odd{background:#FFF7E6}
+.cell{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;padding:0;border:0;border-bottom:2px solid rgba(var(--inkrgb),.22);border-left:2px solid rgba(var(--inkrgb),.2);background:transparent}
+.odd{background:var(--odd)}
 .bw{position:relative;display:inline-flex;width:var(--b);height:var(--b)}
 .badge{display:grid;place-items:center;width:100%;height:100%;border:3px solid var(--ink);border-radius:28%;font-size:calc(var(--b)*.6);line-height:1;font-weight:700;transition:transform .12s}
 .badge.red{background:var(--red);color:#fff}
@@ -109,10 +120,10 @@ svg{display:block}
 .empty svg{width:16vh;height:16vh;animation:float 5s ease-in-out infinite}
 .empty small{font-size:.6em;opacity:.75}
 
-.legend{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:.5vh 1.1vw;padding:.7vh 1vw;border-top:var(--bd);background:#FFF7E6;font-size:clamp(10px,1.6vh,19px)}
+.legend{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:.5vh 1.1vw;padding:.7vh 1vw;border-top:var(--bd);background:var(--odd);font-size:clamp(10px,1.6vh,19px)}
 .legend .li{display:inline-flex;align-items:center;gap:.4em;--b:2.4vh}
 .legend .li .badge{border-width:2px}
-.carry{flex:none;display:flex;gap:.8vw;align-items:flex-start;max-height:17vh;padding:.8vh 1vw;border-top:var(--bd);background:#FDEBE6}
+.carry{flex:none;display:flex;gap:.8vw;align-items:flex-start;max-height:17vh;padding:.8vh 1vw;border-top:var(--bd);background:var(--notice)}
 .ctag{flex:none;padding:.5vh 1vw;border:var(--bd);border-radius:14px;background:var(--coral);font-size:clamp(12px,2vh,24px);font-weight:700;line-height:1.2;box-shadow:3px 3px 0 var(--ink)}
 .cbody{flex:1;min-width:0;max-height:15vh;overflow:auto;display:flex;flex-wrap:wrap;gap:.6vh .8vw;align-content:flex-start;--b:3.4vh}
 .cg{display:inline-flex;align-items:center;flex-wrap:wrap;gap:.35vw;padding:.4vh .7vw;border:2px solid var(--ink);border-radius:14px;background:var(--card);font-size:clamp(11px,1.9vh,22px)}
@@ -130,18 +141,18 @@ svg{display:block}
 .dtsub{margin-top:.3vh;font-size:clamp(11px,1.7vh,20px);min-height:1.2em}
 .chip{display:inline-block;padding:0 .7em;border:2px solid var(--ink);border-radius:999px;background:var(--coral);font-size:.9em}
 .chipbtn{font:inherit;cursor:pointer;background:var(--sky)}
-.notice-bar{flex:none;display:flex;align-items:center;gap:.6vw;padding:.8vh 1.1vw;border-bottom:var(--bd);background:#FDEBE6;font-size:clamp(14px,2.2vh,25px);font-weight:700;line-height:1.35}
+.notice-bar{flex:none;display:flex;align-items:center;gap:.6vw;padding:.8vh 1.1vw;border-bottom:var(--bd);background:var(--notice);font-size:clamp(14px,2.2vh,25px);font-weight:700;line-height:1.35}
 .notice-bar .ntag{flex:none;padding:.1em .55em;border:2px solid var(--ink);border-radius:10px;background:var(--coral);font-size:.82em}
 .rbody{position:relative;flex:1;min-height:0;display:flex;padding:1.2vh 1.4vw}
 .vbox{flex:1;align-self:stretch;min-width:0;overflow:hidden;writing-mode:vertical-rl;text-orientation:mixed;font-size:var(--vfs,4vh);line-height:1.55}
 .vbox ol{list-style:none;margin:0;padding:0;height:100%}
-.vbox li{margin:0;padding-left:.45em;margin-left:.45em;border-left:2px dashed rgba(62,58,57,.4)}
+.vbox li{margin:0;padding-left:.45em;margin-left:.45em;border-left:2px dashed rgba(var(--inkrgb),.4)}
 .vbox li:last-child{border-left:0}
 .vbox .no{text-combine-upright:all;-webkit-text-combine:horizontal;font-weight:700;color:var(--coral);-webkit-text-stroke:0;margin-block-end:.15em;display:inline-block}
 .vbox .tcy{text-combine-upright:all;-webkit-text-combine:horizontal;white-space:nowrap}
-.vbox li.hw .t{background:#FBE7B0;border-radius:6px}
-.rfoot{flex:none;position:relative;display:flex;align-items:center;gap:1vw;min-height:6vh;padding:.5vh 1.2vw;border-top:var(--bd);background:#FFF7E6;font-size:clamp(10px,1.6vh,19px)}
-.rfoot .sw{display:inline-block;width:1.4em;height:1em;border:2px solid var(--ink);border-radius:5px;background:#FBE7B0;vertical-align:-.15em;margin-right:.4em}
+.vbox li.hw .t{background:var(--hl);border-radius:6px}
+.rfoot{flex:none;position:relative;display:flex;align-items:center;gap:1vw;min-height:6vh;padding:.5vh 1.2vw;border-top:var(--bd);background:var(--odd);font-size:clamp(10px,1.6vh,19px)}
+.rfoot .sw{display:inline-block;width:1.4em;height:1em;border:2px solid var(--ink);border-radius:5px;background:var(--hl);vertical-align:-.15em;margin-right:.4em}
 .rfoot .sky-icons{margin-left:auto;display:flex;align-items:center;gap:.6vw}
 .rfoot .sky-icons svg{width:5vh;height:5vh;animation:float 4.5s ease-in-out infinite}
 .rfoot .sky-icons svg:nth-child(2){animation-delay:-1.6s}
@@ -181,7 +192,7 @@ svg{display:block}
 }
 
 /* ---------- 彈窗／提示 ---------- */
-.overlay{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(62,58,57,.38)}
+.overlay{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(30,28,27,.45)}
 .overlay.show{display:flex}
 .modal{width:min(490px,100%);max-height:90vh;overflow:auto;padding:22px;background:var(--card);border:var(--bd);border-radius:var(--r);box-shadow:var(--shadow)}
 .modal h2{font-size:26px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
@@ -256,7 +267,7 @@ svg{display:block}
 .ring-hoop{width:68px;height:24px;border:5px solid var(--red);border-radius:50%;margin:0 auto;box-shadow:0 2px 0 var(--ink);transition:transform .45s cubic-bezier(.2,1.4,.4,1)}
 .ring-hoop.landed{position:absolute;top:36px;left:50%;transform:translateX(-50%) scale(1.08);z-index:3}
 
-.hoop-stage{position:relative;height:190px;max-width:340px;margin:8px auto 12px;background:#FFF7E6;border:var(--bd);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:12px}
+.hoop-stage{position:relative;height:190px;max-width:340px;margin:8px auto 12px;background:var(--odd);border:var(--bd);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:12px}
 .backboard{width:130px;height:68px;background:#FFF;border:var(--bd);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px;position:relative}
 .backboard-sq{width:46px;height:30px;border:3px solid var(--red)}
 .rim{width:56px;height:12px;background:var(--red);border:2.5px solid var(--ink);border-radius:999px;margin-top:-4px;z-index:2}
@@ -308,7 +319,7 @@ body.admin-open{overflow:hidden}
 .ad-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:6px 0}
 .ad-head h2{display:flex;align-items:center;gap:10px;font-size:28px;margin-right:auto}
 .ad-head h2 svg{width:44px;height:44px}
-.tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px 0;background:var(--paper)}
+.tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:8px 0;background:var(--paper)}
 .tab{min-height:60px;padding:6px;border:var(--bd);border-radius:16px;background:var(--card);font-size:17px;line-height:1.2}
 .tab.on{background:var(--yellow);box-shadow:3px 3px 0 var(--ink)}
 .tab small{display:block;font-size:12px;opacity:.75}
@@ -342,7 +353,7 @@ body.admin-open{overflow:hidden}
 .seatbtn .lbl{display:block;font-size:14px;opacity:.8}
 .bulk{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
 .tk{margin-bottom:14px;--b:42px}
-.tk .who{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:2px dashed rgba(62,58,57,.35)}
+.tk .who{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:2px dashed rgba(var(--inkrgb),.35)}
 .tk .who:first-of-type{border-top:0}
 .tk .wn{flex:1;min-width:120px;font-size:19px}
 .empty-ad{padding:30px 10px;text-align:center;font-size:21px}
@@ -356,6 +367,51 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
   .tab{font-size:15px;min-height:52px}
   .seats{grid-template-columns:repeat(2,1fr)}
 }
+
+/* ---------- 後台：版面外觀卡片 ---------- */
+.themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.themecard{padding:12px;border:var(--bd);border-radius:18px;background:var(--card);box-shadow:3px 3px 0 var(--ink);text-align:left}
+.themecard.on{background:#FFF3C4;border-color:var(--navy)}
+.themecard:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+
+/* =====================================================================
+ * 版面主題（後台 #admin 與彈窗 .modal 固定使用預設色票，只換前台大螢幕）
+ * ===================================================================== */
+/* ── 傳統黑板 ── */
+[data-theme="chalk"]{
+  --paper:#4B3526; --card:#2F4B3F; --ink:#F3F0E6; --inkrgb:243,240,230;
+  --coral:#A9564D; --yellow:#8C7B2F; --sky:#3F6F7D; --green:#4A7352;
+  --red:#E0685D; --navy:#FFFFFF; --tickgreen:#9BE07A;
+  --th:#3B5C4D; --odd:#35544A; --notice:#5A3F39; --hl:#6E6530;
+  --bd:2px solid rgba(243,240,230,.7); --r:8px; --shadow:0 4px 0 rgba(0,0,0,.35);
+}
+[data-theme="chalk"] #front{text-shadow:0 0 1px rgba(255,255,255,.3)}
+[data-theme="chalk"] .panel{
+  border:7px solid #A87B52;border-radius:8px;
+  background:radial-gradient(ellipse at 30% 20%,#3A5B4D,#2A4338);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.25),inset 0 0 60px rgba(0,0,0,.3),0 5px 0 rgba(0,0,0,.4)}
+[data-theme="chalk"] .nm{background:transparent}
+[data-theme="chalk"] .nm.odd{background:var(--odd)}
+[data-theme="chalk"] .navbtn,[data-theme="chalk"] .tbtn,[data-theme="chalk"] .ctag{box-shadow:2px 2px 0 rgba(0,0,0,.45)}
+[data-theme="chalk"] .cg{background:rgba(0,0,0,.18)}
+[data-theme="chalk"] .tick path:first-child{stroke:#1d2d26}
+
+/* ── 日式無印 ── */
+[data-theme="muji"]{
+  --paper:#F6F4EF; --card:#FFFFFF; --ink:#3B3A37; --inkrgb:59,58,55;
+  --coral:#E3CBC3; --yellow:#E8DEC8; --sky:#D7DFE2; --green:#DCE2D2;
+  --red:#B5524A; --navy:#3E5560; --tickgreen:#7E9C6E;
+  --th:#EFEBE2; --odd:#FAF8F3; --notice:#F4ECE6; --hl:#EFE5CC;
+  --bd:1px solid #CFCABF; --r:6px; --shadow:none;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Huninn',sans-serif;
+}
+[data-theme="muji"] #front *{box-shadow:none}
+[data-theme="muji"] #front :is(.tbtn,.chip,.cg,.star-done,.ctag,.navbtn,.tmp,.notice-bar .ntag){border-width:1px}
+[data-theme="muji"] #front :is(.badge,.nm .no){border-width:1.5px}
+[data-theme="muji"] #front :is(.th,.dt,h1){font-weight:500}
+[data-theme="muji"] .sky-icons{display:none}
+[data-theme="muji"] :is(.hicon,.deco,.empty svg){filter:grayscale(.85);opacity:.8}
+[data-theme="muji"] .vbox li{border-left-style:solid;border-left-width:1px}
 </style>
 </head>
 <body>
@@ -529,6 +585,7 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
       <button class="tab" data-tab="track">欠交追蹤<small>跨日未結案</small></button>
       <button class="tab" data-tab="points">獎勵與積分<small>再抽獎與加減分</small></button>
       <button class="tab" data-tab="roster">班級名單<small>設定座號與姓名</small></button>
+      <button class="tab" data-tab="theme">版面外觀<small>黑板・無印・手繪</small></button>
     </nav>
     <div id="adBody"></div>
   </div>
@@ -551,6 +608,14 @@ const WD = ['日','一','二','三','四','五','六'];
 const LABEL = { unsubmitted:'未交', done:'已完成', correction:'待訂正', corrected:'訂正完成' };
 const NEXT  = { '':'done', done:'unsubmitted', unsubmitted:'correction', correction:'corrected', corrected:'' };
 const POLL_MS = 12000;
+const THEME_IDS = ['doodle', 'chalk', 'muji'];
+const LS_THEME_KEY = 'CLASS_BOARD_THEME';
+function applyTheme(t){
+  if (THEME_IDS.indexOf(t) < 0) t = 'doodle';
+  const root = document.documentElement;
+  if (root.getAttribute('data-theme') !== t) { root.setAttribute('data-theme', t); setTimeout(fitVertical, 80); }
+  try { localStorage.setItem(LS_THEME_KEY, t); } catch(e){}
+}
 
 /* 台灣時區今日 YYYY-MM-DD */
 function getTodayTaipei(){
@@ -622,6 +687,58 @@ async function fbPut(path, val){
   if (!res.ok) throw new Error('Firebase 儲存失敗 (HTTP ' + res.status + ')');
   return res.json();
 }
+
+async function fbGet(path){
+  const res = await fetch(dbBaseUrl() + '/boardData/' + path + '.json');
+  if (!res.ok) throw new Error('Firebase 連線失敗 (HTTP ' + res.status + ')');
+  return res.json();
+}
+
+/* 只抓前台需要的節點（不再每 12 秒下載整個資料庫） */
+async function fbGetBoardData(date){
+  const d = date || getTodayTaipei();
+  const r = await Promise.all([
+    fbGet('students'), fbGet('notice'), fbGet('theme'), fbGet('scores'), fbGet('pointLogs'), fbGet('carry'),
+    fbGet('sourceOverrides/' + d), fbGet('homework/' + d), fbGet('tempItems/' + d),
+    fbGet('status/' + d), fbGet('lottery/' + d), fbGet('lotteryQuota/' + d)
+  ]);
+  const srcOv = r[6], hwDate = r[7];
+  const src = srcOv || stepSchool(d, -1);
+  const hwSrc = (src === d) ? hwDate : await fbGet('homework/' + src);
+  const raw = {
+    students: r[0], notice: r[1], theme: r[2], scores: r[3], pointLogs: r[4], carry: r[5],
+    sourceOverrides: {}, homework: {}, tempItems: {}, status: {}, lottery: {}, lotteryQuota: {}
+  };
+  if (srcOv) raw.sourceOverrides[d] = srcOv;
+  raw.homework[d] = hwDate; raw.homework[src] = hwSrc;
+  raw.tempItems[d] = r[8]; raw.status[d] = r[9]; raw.lottery[d] = r[10]; raw.lotteryQuota[d] = r[11];
+  return raw;
+}
+
+/* 以 ETag 做「讀取→修改→條件寫入」，多裝置同時操作時不會互相覆蓋。
+ * updater 回傳 undefined 代表放棄寫入。若瀏覽器讀不到 ETag，會退回一般寫入。 */
+async function fbTxn(path, updater, tries){
+  tries = tries || 6;
+  const url = dbBaseUrl() + '/boardData/' + path + '.json';
+  for (let i = 0; i < tries; i++) {
+    let res;
+    try { res = await fetch(url, { headers: { 'X-Firebase-ETag': 'true' } }); }
+    catch(e) { res = await fetch(url); }
+    if (!res.ok) throw new Error('Firebase 連線失敗 (HTTP ' + res.status + ')');
+    const etag = res.headers.get('ETag');
+    const cur = await res.json();
+    const next = updater(cur);
+    if (next === undefined) return { committed: false, value: cur };
+    const headers = { 'Content-Type': 'application/json' };
+    if (etag) headers['if-match'] = etag;
+    const w = await fetch(url, { method: 'PUT', headers: headers, body: JSON.stringify(next) });
+    if (w.status === 412) { await new Promise(r => setTimeout(r, 60 + Math.random() * 140)); continue; }
+    if (!w.ok) throw new Error('Firebase 寫入失敗 (HTTP ' + w.status + ')');
+    return { committed: true, value: next };
+  }
+  throw new Error('目前同時操作的人較多，請稍後再試一次');
+}
+const SV_INC = n => ({ '.sv': { increment: n } });
 
 /* 預設範例學生名單（初次使用若資料庫為空時自動顯示，老師可在後台「班級名單」隨時修改） */
 function getStudentsList(rawDb){
@@ -734,6 +851,7 @@ function buildBoardFromDb(rawDb, targetDate){
   return {
     today, date, weekday, source, srcAuto, srcOverride,
     notice: String((rawDb && rawDb.notice) || ''),
+    theme: String((rawDb && rawDb.theme) || 'doodle'),
     students, lines, items, status, carry,
     lotteryToday, lotteryUsedCount, lotteryExtraQuota,
     scoreTotal,
@@ -747,8 +865,7 @@ async function gs(fn){
 
   if (fn === 'getBoard') {
     const viewDate = args[0] || null;
-    const rawDb = await fbGetAll();
-    S.db = rawDb;
+    const rawDb = await fbGetBoardData(viewDate);
     return buildBoardFromDb(rawDb, viewDate);
   }
 
@@ -757,17 +874,12 @@ async function gs(fn){
     const d = dow(anchor);
     const diffToMon = (d === 0) ? -6 : (1 - d);
     const monday = addDays(anchor, diffToMon);
-    const rawDb = S.db || await fbGetAll();
-    const homeworkMap = rawDb.homework || {};
-    const days = [];
-    for (let i = 0; i < 5; i++) {
-      const dt = addDays(monday, i);
-      const rawLines = Array.isArray(homeworkMap[dt]) ? homeworkMap[dt] : [];
-      days.push({
-        date: dt,
-        lines: rawLines.map(l => ({ t: l.t || '', hw: !!l.hw, name: l.name || l.t || '' }))
-      });
-    }
+    const dates = [0, 1, 2, 3, 4].map(i => addDays(monday, i));
+    const lists = await Promise.all(dates.map(dt => fbGet('homework/' + dt)));
+    const days = dates.map((dt, i) => {
+      const rawLines = Array.isArray(lists[i]) ? lists[i] : [];
+      return { date: dt, lines: rawLines.filter(Boolean).map(l => ({ t: l.t || '', hw: !!l.hw, name: l.name || l.t || '' })) };
+    });
     return { today: getTodayTaipei(), monday, days };
   }
 
@@ -838,65 +950,48 @@ async function gs(fn){
 
   if (fn === 'drawLottery') {
     const date = args[0], seat = Number(args[1]);
-    const rawDb = await fbGetAll();
-    const used = Number((rawDb.lottery && rawDb.lottery[date] && rawDb.lottery[date][seat] && rawDb.lottery[date][seat].count) || 0);
-    const prevPts = Number((rawDb.lottery && rawDb.lottery[date] && rawDb.lottery[date][seat] && rawDb.lottery[date][seat].points) || 0);
-    const extra = Number((rawDb.lotteryQuota && rawDb.lotteryQuota[date] && rawDb.lotteryQuota[date][seat]) || 0);
-    const curTotal = Number((rawDb.scores && rawDb.scores[seat]) || 0);
-
+    if (date !== getTodayTaipei()) throw new Error('只能抽取今天的獎勵');
+    const raw = await fbGetBoardData(date);
+    const allowed = drawAllowance(buildBoardFromDb(raw, date), seat);
     const pts = Math.floor(Math.random() * 3) + 1; // +1 ~ +3 分
-    const newTotal = curTotal + pts;
-    const newTodayPts = prevPts + pts;
-    const newUsed = used + 1;
-
-    await Promise.all([
-      fbPut('lottery/' + date + '/' + seat, { points: newTodayPts, count: newUsed }),
-      fbPut('scores/' + seat, newTotal)
-    ]);
-    return { ok: true, points: pts, todayTotal: newTodayPts, usedCount: newUsed, total: newTotal };
+    const tx = await fbTxn('lottery/' + date + '/' + seat, rec => {
+      const used = Number((rec && rec.count) || 0);
+      if (used >= allowed) return undefined;               // 名額已用完，不寫入
+      return { points: Number((rec && rec.points) || 0) + pts, count: used + 1 };
+    });
+    if (!tx.committed) throw new Error('今天的抽獎機會已經用完囉！');
+    await fbPut('scores/' + seat, SV_INC(pts));            // 伺服器端原子加分
+    const total = Number(await fbGet('scores/' + seat)) || 0;
+    return { ok: true, points: pts, todayTotal: tx.value.points, usedCount: tx.value.count, total: total };
   }
 
   if (fn === 'grantExtraLottery') {
     const seat = Number(args[0]);
-    const today = getTodayTaipei();
-    const rawDb = await fbGetAll();
-    const curQuota = Number((rawDb.lotteryQuota && rawDb.lotteryQuota[today] && rawDb.lotteryQuota[today][seat]) || 0);
-    await fbPut('lotteryQuota/' + today + '/' + seat, curQuota + 1);
-    const stu = getStudentsList(rawDb).find(s => s.seat === seat);
+    await fbPut('lotteryQuota/' + getTodayTaipei() + '/' + seat, SV_INC(1));
+    const stu = getStudentsList({ students: await fbGet('students') }).find(s => s.seat === seat);
     return { ok: true, name: stu ? stu.name : '' };
   }
 
   if (fn === 'grantAllExtraLottery') {
-    const today = getTodayTaipei();
-    const rawDb = await fbGetAll();
-    const stus = getStudentsList(rawDb);
+    const stus = getStudentsList({ students: await fbGet('students') });
     const patches = {};
-    stus.forEach(s => {
-      const cur = Number((rawDb.lotteryQuota && rawDb.lotteryQuota[today] && rawDb.lotteryQuota[today][s.seat]) || 0);
-      patches[s.seat] = cur + 1;
-    });
-    await fbPut('lotteryQuota/' + today, patches);
+    stus.forEach(s => { patches[s.seat] = SV_INC(1); });
+    await fbPatch('lotteryQuota/' + getTodayTaipei(), patches);
     return { ok: true, count: stus.length };
   }
 
   if (fn === 'addPoints') {
     const seats = args[0] || [], delta = Number(args[1] || 0), reason = String(args[2] || '');
-    const rawDb = await fbGetAll();
-    const stus = getStudentsList(rawDb);
+    const stus = getStudentsList({ students: await fbGet('students') });
     const scorePatches = {};
     const newLogs = [];
     seats.forEach(seat => {
-      const cur = Number((rawDb.scores && rawDb.scores[seat]) || 0);
-      scorePatches[seat] = cur + delta;
+      scorePatches[seat] = SV_INC(delta);
       const stu = stus.find(s => s.seat === seat);
       newLogs.push({ seat: Number(seat), name: stu ? stu.name : '', delta, reason, ts: Date.now() });
     });
-    const oldLogs = Array.isArray(rawDb.pointLogs) ? rawDb.pointLogs : [];
-    const mergedLogs = newLogs.concat(oldLogs).slice(0, 30);
-    await Promise.all([
-      fbPatch('scores', scorePatches),
-      fbPut('pointLogs', mergedLogs)
-    ]);
+    await fbPatch('scores', scorePatches);
+    await fbTxn('pointLogs', old => newLogs.concat(Array.isArray(old) ? old.filter(Boolean) : []).slice(0, 30));
     return { ok: true };
   }
 
@@ -913,6 +1008,13 @@ async function gs(fn){
   if (fn === 'saveStudents') {
     const list = args[0] || [];
     await fbPut('students', list);
+    return { ok: true };
+  }
+
+  if (fn === 'saveTheme') {
+    const t = String(args[0] || 'doodle');
+    if (THEME_IDS.indexOf(t) < 0) throw new Error('未知的版面模式');
+    await fbPut('theme', t);
     return { ok: true };
   }
 
@@ -967,9 +1069,8 @@ function icon(status, seat){
 }
 const skey = (it, seat) => it.source+'|'+it.name+'|'+seat;
 
-function canDraw(seat){
-  const b = S.board;
-  if (!b || b.date !== b.today) return false;
+function drawAllowance(b, seat){
+  if (!b || b.date !== b.today) return 0;
   const regularItems = b.items.filter(it => !it.temp);
   const hwCompleted = b.weekday && regularItems.length > 0 &&
     regularItems.every(it => {
@@ -977,11 +1078,13 @@ function canDraw(seat){
       return t === 'done' || t === 'corrected';
     }) &&
     !b.carry.some(g => g.entries.some(e => e.seat === seat));
-
   const extra = (b.lotteryExtraQuota && Number(b.lotteryExtraQuota[seat])) || 0;
+  return (hwCompleted ? 1 : 0) + extra;
+}
+function canDraw(seat){
+  const b = S.board; if (!b) return false;
   const used = (b.lotteryUsedCount && Number(b.lotteryUsedCount[seat])) || 0;
-  const totalAllowed = (hwCompleted ? 1 : 0) + extra;
-  return totalAllowed > used;
+  return drawAllowance(b, seat) > used;
 }
 
 /* =====================================================
@@ -1078,6 +1181,7 @@ function fitVertical(){
 window.addEventListener('resize', ()=>{ fitVertical(); });
 
 function renderAll(){
+  if (S.board && S.board.theme) applyTheme(S.board.theme);
   renderDate(); renderLeft(); renderRight();
   if (S.adminOpen) adminRefresh();
 }
@@ -1242,7 +1346,9 @@ function initScratchPad(seat){
 
   canvas.addEventListener('pointerdown', e => { drawing = true; scratchAt(e.clientX, e.clientY); });
   canvas.addEventListener('pointermove', e => { if (drawing) scratchAt(e.clientX, e.clientY); });
-  window.addEventListener('pointerup', () => { drawing = false; checkPercent(); }, { once: false });
+  canvas.addEventListener('pointerup', () => { drawing = false; checkPercent(); });
+  canvas.addEventListener('pointerleave', () => { drawing = false; });
+  canvas.addEventListener('pointercancel', () => { drawing = false; });
 }
 
 function openLotto(seat){
@@ -1701,6 +1807,7 @@ function renderAdmin(){
   else if (S.tab === 'register') { body.innerHTML = '<div id="regTop"></div><div id="regSeats"></div>'; renderRegTop(); renderRegSeats(); }
   else if (S.tab === 'track') body.innerHTML = viewTrack();
   else if (S.tab === 'points') body.innerHTML = viewPoints();
+  else if (S.tab === 'theme') body.innerHTML = viewTheme();
   else body.innerHTML = viewRoster();
 }
 
@@ -1939,6 +2046,32 @@ function viewPoints(){
 }
 
 /* ---------- 分頁五：班級名單設定（直接存 Firebase，免用試算表） ---------- */
+const THEMES = [
+  { id:'doodle', name:'可愛手繪插圖', desc:'粗框線、馬卡龍色塊、插畫小圖示（預設）', bg:'#FFFCF6', panel:'#FFFEFA', bar:'#A8D3E6', ink:'#3E3A39', dots:['#F2A497','#F6D27A','#B9DAA5'], radius:14, bw:3 },
+  { id:'chalk',  name:'傳統黑板',     desc:'墨綠黑板、木頭邊框、粉筆白字', bg:'#4B3526', panel:'#2F4B3F', bar:'#3F6F7D', ink:'#F3F0E6', frame:'#A87B52', dots:['#E0685D','#E8D26A','#9BE07A'], radius:6, bw:5 },
+  { id:'muji',   name:'日式無印',     desc:'米白底、極細線條、低彩度自然色', bg:'#F6F4EF', panel:'#FFFFFF', bar:'#D7DFE2', ink:'#3B3A37', dots:['#B5524A','#E8DEC8','#7E9C6E'], radius:4, bw:1 }
+];
+function viewTheme(){
+  const cur = (S.board && S.board.theme) || 'doodle';
+  let h = '<section class="card"><h3>🎨 教室大螢幕版面模式</h3>'+
+    '<div class="note">選一種風格，教室大螢幕會在幾秒內自動換上（設定存在 Firebase，所有裝置同步）。後台與抽獎視窗維持手繪風，確保好讀。</div>'+
+    '<div class="themes">';
+  THEMES.forEach(t => {
+    const on = t.id === cur, bw2 = Math.min(t.bw, 2);
+    h += '<button type="button" class="themecard'+(on?' on':'')+'" data-act="theme" data-t="'+t.id+'">'+
+      '<div style="background:'+t.bg+';padding:12px;border-radius:10px;border:2px solid rgba(0,0,0,.12);margin-bottom:10px">'+
+        '<div style="background:'+t.panel+';border:'+t.bw+'px solid '+(t.frame||t.ink)+';border-radius:'+t.radius+'px;overflow:hidden">'+
+          '<div style="background:'+t.bar+';height:22px;border-bottom:'+bw2+'px solid '+t.ink+'"></div>'+
+          '<div style="padding:8px;display:flex;gap:6px;align-items:center">'+
+            t.dots.map(c => '<span style="width:18px;height:18px;border-radius:'+(t.id==='muji'?'3px':'28%')+';background:'+c+';border:'+bw2+'px solid '+t.ink+'"></span>').join('')+
+            '<span style="flex:1;height:6px;border-radius:3px;background:'+t.ink+';opacity:.35"></span>'+
+          '</div></div></div>'+
+      '<b style="font-size:21px">'+t.name+'</b>'+(on?' <span class="chip">使用中 ✓</span>':'')+
+      '<div class="sub">'+t.desc+'</div></button>';
+  });
+  return h + '</div></section>';
+}
+
 function viewRoster(){
   const stus = (S.board && S.board.students) || [];
   const lines = stus.map(s => s.seat + ' ' + s.name).join('\n');
@@ -1980,6 +2113,18 @@ adBody.addEventListener('click', async ev=>{
   const act = btn.dataset.act;
   const card = btn.closest('.card');
   const day = card && card.dataset.day;
+
+  if (act === 'theme') {
+    const t = btn.dataset.t, meta = THEMES.find(x => x.id === t);
+    try {
+      await gs('saveTheme', t);
+      applyTheme(t); if (S.board) S.board.theme = t;
+      S.writeSeq++; S.lastJson = '';
+      renderAdmin();
+      toast('已切換版面：' + (meta ? meta.name : t));
+    } catch(e){ handleErr(e); }
+    return;
+  }
 
   if (act === 'saveRoster') {
     const raw = ($('#rosterTxt').value || '').trim();
