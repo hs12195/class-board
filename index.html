@@ -6,6 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="教室聯絡簿">
+<script>try{var _t=localStorage.getItem("CLASS_BOARD_THEME");if(_t)document.documentElement.setAttribute("data-theme",_t)}catch(e){}</script>
 <title>教室聯絡簿</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -462,7 +463,7 @@ body.admin-open{overflow:hidden}
 .ad-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:6px 0}
 .ad-head h2{display:flex;align-items:center;gap:10px;font-size:28px;margin-right:auto}
 .ad-head h2 svg{width:44px;height:44px}
-.tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px 0;background:var(--paper)}
+.tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:8px 0;background:var(--paper)}
 .tab{min-height:60px;padding:6px;border:var(--bd);border-radius:16px;background:var(--card);font-size:17px;line-height:1.2}
 .tab.on{background:var(--yellow);box-shadow:3px 3px 0 var(--ink)}
 .tab small{display:block;font-size:12px;opacity:.75}
@@ -511,6 +512,41 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
   .seats{grid-template-columns:repeat(2,1fr)}
 }
 
+
+/* ---------- 後台：版面外觀卡片 ---------- */
+.themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.themecard{padding:12px;border:var(--bd);border-radius:18px;background:var(--card);box-shadow:3px 3px 0 var(--ink);text-align:left}
+.themecard.on{background:#FFF3C4;border-color:var(--navy)}
+.themecard:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+/* ===== 版面主題（後台 #admin 與彈窗 .modal 固定使用預設色票，只換前台大螢幕） ===== */
+[data-theme="chalk"]{
+  --paper:#4B3526; --card:#2F4B3F; --ink:#F3F0E6; --inkrgb:243,240,230;
+  --coral:#A9564D; --yellow:#8C7B2F; --sky:#3F6F7D; --green:#4A7352;
+  --red:#E0685D; --navy:#FFFFFF; --tickgreen:#9BE07A;
+  --th:#3B5C4D; --odd:#35544A; --notice:#5A3F39; --hl:#6E6530;
+  --bd:2px solid rgba(243,240,230,.7); --r:8px; --shadow:0 4px 0 rgba(0,0,0,.35);
+}
+[data-theme="chalk"] #front{text-shadow:0 0 1px rgba(255,255,255,.3)}
+[data-theme="chalk"] .panel{border:7px solid #A87B52;border-radius:8px;background:radial-gradient(ellipse at 30% 20%,#3A5B4D,#2A4338);box-shadow:inset 0 0 0 2px rgba(0,0,0,.25),inset 0 0 60px rgba(0,0,0,.3),0 5px 0 rgba(0,0,0,.4)}
+[data-theme="chalk"] .nm{background:transparent}
+[data-theme="chalk"] .nm.odd{background:var(--odd)}
+[data-theme="chalk"] .navbtn,[data-theme="chalk"] .tbtn,[data-theme="chalk"] .ctag{box-shadow:2px 2px 0 rgba(0,0,0,.45)}
+[data-theme="chalk"] .cg{background:rgba(0,0,0,.18)}
+[data-theme="muji"]{
+  --paper:#F6F4EF; --card:#FFFFFF; --ink:#3B3A37; --inkrgb:59,58,55;
+  --coral:#E3CBC3; --yellow:#E8DEC8; --sky:#D7DFE2; --green:#DCE2D2;
+  --red:#B5524A; --navy:#3E5560; --tickgreen:#7E9C6E;
+  --th:#EFEBE2; --odd:#FAF8F3; --notice:#F4ECE6; --hl:#EFE5CC;
+  --bd:1px solid #CFCABF; --r:6px; --shadow:none;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Huninn',sans-serif;
+}
+[data-theme="muji"] #front *{box-shadow:none}
+[data-theme="muji"] #front :is(.tbtn,.chip,.cg,.star-done,.ctag,.navbtn,.tmp,.notice-bar .ntag){border-width:1px}
+[data-theme="muji"] #front :is(.badge,.nm .no){border-width:1.5px}
+[data-theme="muji"] #front :is(.th,.dt,h1){font-weight:500}
+[data-theme="muji"] .sky-icons{display:none}
+[data-theme="muji"] :is(.hicon,.deco,.empty svg){filter:grayscale(.85);opacity:.8}
+[data-theme="muji"] .vbox li{border-left-style:solid;border-left-width:1px}
 </style>
 </head>
 <body>
@@ -763,6 +799,7 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
       <button class="tab" data-tab="track">欠交追蹤<small>跨日未結案</small></button>
       <button class="tab" data-tab="points">獎勵與積分<small>再抽獎與加減分</small></button>
       <button class="tab" data-tab="roster">班級名單<small>設定座號與姓名</small></button>
+      <button class="tab" data-tab="theme">版面外觀<small>黑板・無印・手繪</small></button>
     </nav>
     <div id="adBody"></div>
   </div>
@@ -785,6 +822,14 @@ const WD = ['日','一','二','三','四','五','六'];
 const LABEL = { unsubmitted:'未交', done:'已完成', correction:'待訂正', corrected:'訂正完成' };
 const NEXT  = { '':'done', done:'unsubmitted', unsubmitted:'correction', correction:'corrected', corrected:'' };
 const POLL_MS = 12000;
+const THEME_IDS = ['doodle', 'chalk', 'muji'];
+const LS_THEME_KEY = 'CLASS_BOARD_THEME';
+function applyTheme(t){
+  if (THEME_IDS.indexOf(t) < 0) t = 'doodle';
+  const root = document.documentElement;
+  if (root.getAttribute('data-theme') !== t) { root.setAttribute('data-theme', t); setTimeout(fitVertical, 80); }
+  try { localStorage.setItem(LS_THEME_KEY, t); } catch(e){}
+}
 /* 台灣時區今日 YYYY-MM-DD */
 function getTodayTaipei(){
   const now = new Date();
@@ -830,6 +875,47 @@ function dbBaseUrl(){
   return FIREBASE_DB_URL.replace(/\/+$/, '');
 }
 
+/* 🧪 沙盒：記憶體模擬資料庫。沙盒模式下所有 fb* 讀寫都導向這裡，完全不碰真實 Firebase */
+const SB = { db: null, src: null };
+function sbEnsure(){
+  const b = S.sandboxBoard;
+  if (!b) throw new Error('沙盒尚未啟動');
+  if (SB.src === b && SB.db) return;
+  SB.src = b;
+  SB.db = {
+    students: JSON.parse(JSON.stringify(b.students || [])),
+    scores: Object.assign({}, b.scoreTotal || {}),
+    pets: JSON.parse(JSON.stringify(b.pets || {})),
+    pointLogs: [], notice: b.notice || '', lotteryQuota: {}
+  };
+  SB.db.lotteryQuota[getTodayTaipei()] = Object.assign({}, b.lotteryExtraQuota || {});
+}
+function sbKeys(path){ return String(path).split('/').filter(Boolean); }
+function sbGet(path){
+  let cur = SB.db;
+  for (const k of sbKeys(path)) { if (cur == null || typeof cur !== 'object') return null; cur = cur[k]; }
+  return cur === undefined ? null : JSON.parse(JSON.stringify(cur));
+}
+function sbSet(path, val){
+  const ks = sbKeys(path); let cur = SB.db;
+  for (let i = 0; i < ks.length - 1; i++) {
+    if (cur[ks[i]] == null || typeof cur[ks[i]] !== 'object') cur[ks[i]] = {};
+    cur = cur[ks[i]];
+  }
+  const k = ks[ks.length - 1];
+  if (val && typeof val === 'object' && val['.sv'] && val['.sv'].increment !== undefined) { cur[k] = (Number(cur[k]) || 0) + val['.sv'].increment; return; }
+  if (val === null || val === undefined) delete cur[k]; else cur[k] = JSON.parse(JSON.stringify(val));
+}
+function sbSync(){
+  const sb = S.sandboxBoard; if (!sb || !SB.db) return;
+  const sc = SB.db.scores || {};
+  (sb.students || []).forEach(s => { sb.scoreTotal[s.seat] = Number(sc[s.seat] || 0); });
+  sb.pets = SB.db.pets || {};
+  sb.lotteryExtraQuota = Object.assign({}, (SB.db.lotteryQuota && SB.db.lotteryQuota[getTodayTaipei()]) || {});
+  sb.pointLogs = (Array.isArray(SB.db.pointLogs) ? SB.db.pointLogs : []).slice(0, 20);
+  S.lastJson = '';
+}
+
 async function fbGetAll(){
   const res = await fetch(dbBaseUrl() + '/boardData.json');
   if (!res.ok) throw new Error('Firebase 連線失敗 (HTTP ' + res.status + ')');
@@ -838,6 +924,7 @@ async function fbGetAll(){
 }
 
 async function fbPatch(path, obj){
+  if (S.sandbox) { sbEnsure(); Object.keys(obj).forEach(k => sbSet(path + '/' + k, obj[k])); return null; }
   const res = await fetch(dbBaseUrl() + '/boardData/' + path + '.json', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -848,6 +935,7 @@ async function fbPatch(path, obj){
 }
 
 async function fbPut(path, val){
+  if (S.sandbox) { sbEnsure(); sbSet(path, val); return null; }
   const res = await fetch(dbBaseUrl() + '/boardData/' + path + '.json', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -858,6 +946,7 @@ async function fbPut(path, val){
 }
 
 async function fbGet(path){
+  if (S.sandbox) { sbEnsure(); return sbGet(path); }
   const res = await fetch(dbBaseUrl() + '/boardData/' + path + '.json');
   if (!res.ok) throw new Error('Firebase 連線失敗 (HTTP ' + res.status + ')');
   return res.json();
@@ -869,13 +958,13 @@ async function fbGetBoardData(date){
   const r = await Promise.all([
     fbGet('students'), fbGet('notice'), fbGet('scores'), fbGet('pointLogs'), fbGet('carry'), fbGet('pets'),
     fbGet('sourceOverrides/' + d), fbGet('homework/' + d), fbGet('tempItems/' + d),
-    fbGet('status/' + d), fbGet('lottery/' + d), fbGet('lotteryQuota/' + d)
+    fbGet('status/' + d), fbGet('lottery/' + d), fbGet('lotteryQuota/' + d), fbGet('theme')
   ]);
   const srcOv = r[6], hwDate = r[7];
   const src = srcOv || stepSchool(d, -1);
   const hwSrc = (src === d) ? hwDate : await fbGet('homework/' + src);
   const raw = {
-    students: r[0], notice: r[1], scores: r[2], pointLogs: r[3], carry: r[4], pets: r[5],
+    theme: r[12], students: r[0], notice: r[1], scores: r[2], pointLogs: r[3], carry: r[4], pets: r[5],
     sourceOverrides: {}, homework: {}, tempItems: {}, status: {}, lottery: {}, lotteryQuota: {}
   };
   if (srcOv) raw.sourceOverrides[d] = srcOv;
@@ -888,6 +977,12 @@ async function fbGetBoardData(date){
  * updater 回傳 undefined 代表放棄寫入。若瀏覽器讀不到 ETag，會退回一般寫入。 */
 async function fbTxn(path, updater, tries){
   tries = tries || 6;
+  if (S.sandbox) {
+    sbEnsure();
+    const cur0 = sbGet(path), next0 = updater(cur0);
+    if (next0 === undefined) return { committed: false, value: cur0 };
+    sbSet(path, next0); return { committed: true, value: next0 };
+  }
   const url = dbBaseUrl() + '/boardData/' + path + '.json';
   for (let i = 0; i < tries; i++) {
     let res;
@@ -1020,6 +1115,7 @@ function buildBoardFromDb(rawDb, targetDate){
   return {
     today, date, weekday, source, srcAuto, srcOverride,
     notice: String((rawDb && rawDb.notice) || ''),
+    theme: String((rawDb && rawDb.theme) || 'doodle'),
     students, lines, items, status, carry,
     lotteryToday, lotteryUsedCount, lotteryExtraQuota,
     scoreTotal,
@@ -1030,6 +1126,11 @@ function buildBoardFromDb(rawDb, targetDate){
 
 /* 統一後端呼叫轉接層（所有操作直接讀寫 Firebase Realtime Database） */
 async function gs(fn){
+  const r = await gsCore.apply(null, arguments);
+  if (S.sandbox && fn !== 'getBoard' && S.sandboxBoard) { sbEnsure(); sbSync(); }
+  return r;
+}
+async function gsCore(fn){
   const args = Array.prototype.slice.call(arguments, 1);
 
   /* 🧪 沙盒測試模式：所有操作在記憶體虛擬副本中執行，完全不寫入真實 Firebase */
@@ -1043,10 +1144,13 @@ async function gs(fn){
       sb.lotteryToday[seat] = (sb.lotteryToday[seat] || 0) + pts;
       sb.lotteryUsedCount[seat] = (sb.lotteryUsedCount[seat] || 0) + 1;
       sb.scoreTotal[seat] = (sb.scoreTotal[seat] || 0) + pts;
+      sbEnsure(); sbSet('scores/' + seat, sb.scoreTotal[seat]);
       return { ok: true, points: pts, todayTotal: sb.lotteryToday[seat], usedCount: sb.lotteryUsedCount[seat], total: sb.scoreTotal[seat] };
     }
 
-    if (fn === 'petAction') {
+  }
+
+  if (fn === 'petAction') {
     const actorSeat = Number(args[0]);
     const ownerSeat = Number(args[1]);
     const slotIdx = Number(args[2]); // 0 或 1
@@ -1353,6 +1457,109 @@ async function gs(fn){
     };
   }
 
+  if (fn === 'getBoard') {
+    const viewDate = args[0] || null;
+    const rawDb = await fbGetBoardData(viewDate);
+    return buildBoardFromDb(rawDb, viewDate);
+  }
+
+  if (fn === 'getWeek') {
+    const anchor = args[0] || getTodayTaipei();
+    const d = dow(anchor);
+    const monday = addDays(anchor, (d === 0) ? -6 : (1 - d));
+    const dates = [0, 1, 2, 3, 4].map(i => addDays(monday, i));
+    const lists = await Promise.all(dates.map(dt => fbGet('homework/' + dt)));
+    const days = dates.map((dt, i) => {
+      const rawLines = Array.isArray(lists[i]) ? lists[i] : [];
+      return { date: dt, lines: rawLines.filter(Boolean).map(l => ({ t: l.t || '', hw: !!l.hw, name: l.name || l.t || '' })) };
+    });
+    return { today: getTodayTaipei(), monday, days };
+  }
+
+  if (fn === 'saveHomework') {
+    const date = args[0], rows = args[1] || [];
+    await fbPut('homework/' + date, rows.map(r => ({ t: r.text, hw: !!r.check, name: r.check ? (r.short || r.text) : '' })));
+    return { ok: true };
+  }
+
+  if (fn === 'saveNotice') { await fbPut('notice', args[0] || ''); return { ok: true }; }
+
+  if (fn === 'setSource') { await fbPut('sourceOverrides/' + args[0], args[1] || null); return { ok: true }; }
+
+  if (fn === 'addTempItem')    { await fbPut('tempItems/' + args[0] + '/' + fbKey(args[1]), true);  return { ok: true }; }
+  if (fn === 'removeTempItem') { await fbPut('tempItems/' + args[0] + '/' + fbKey(args[1]), null); return { ok: true }; }
+
+  if (fn === 'setStatusBatch') {
+    const list = args[0] || [];
+    const statusPatches = {}, carryPatches = {};
+    list.forEach(p => {
+      statusPatches[p.due + '/' + fbKey(p.source + '|' + p.name + '|' + p.seat)] = p.status || null;
+      const ck = fbKey(p.due + '|' + p.source + '|' + p.name + '|' + p.seat);
+      carryPatches[ck] = (p.status === 'unsubmitted' || p.status === 'correction')
+        ? { due: p.due, source: p.source, name: p.name, seat: Number(p.seat), status: p.status } : null;
+    });
+    await Promise.all([fbPatch('status', statusPatches), fbPatch('carry', carryPatches)]);
+    return { ok: true };
+  }
+
+  if (fn === 'drawLottery') {
+    const date = args[0], seat = Number(args[1]);
+    if (date !== getTodayTaipei()) throw new Error('只能抽取今天的獎勵');
+    const raw = await fbGetBoardData(date);
+    const allowed = drawAllowance(buildBoardFromDb(raw, date), seat);
+    const pts = Math.floor(Math.random() * 3) + 1;
+    const tx = await fbTxn('lottery/' + date + '/' + seat, rec => {
+      const used = Number((rec && rec.count) || 0);
+      if (used >= allowed) return undefined;
+      return { points: Number((rec && rec.points) || 0) + pts, count: used + 1 };
+    });
+    if (!tx.committed) throw new Error('今天的抽獎機會已經用完囉！');
+    await fbPut('scores/' + seat, SV_INC(pts));
+    const total = Number(await fbGet('scores/' + seat)) || 0;
+    return { ok: true, points: pts, todayTotal: tx.value.points, usedCount: tx.value.count, total: total };
+  }
+
+  if (fn === 'grantExtraLottery') {
+    const seat = Number(args[0]);
+    await fbPut('lotteryQuota/' + getTodayTaipei() + '/' + seat, SV_INC(1));
+    const stu = getStudentsList({ students: await fbGet('students') }).find(x => x.seat === seat);
+    return { ok: true, name: stu ? stu.name : '' };
+  }
+
+  if (fn === 'grantAllExtraLottery') {
+    const stus = getStudentsList({ students: await fbGet('students') });
+    const patches = {};
+    stus.forEach(x => { patches[x.seat] = SV_INC(1); });
+    await fbPatch('lotteryQuota/' + getTodayTaipei(), patches);
+    return { ok: true, count: stus.length };
+  }
+
+  if (fn === 'addPoints') {
+    const seats = args[0] || [], delta = Number(args[1] || 0), reason = String(args[2] || '');
+    const stus = getStudentsList({ students: await fbGet('students') });
+    const patches = {}, newLogs = [];
+    seats.forEach(seat => {
+      patches[seat] = SV_INC(delta);
+      const stu = stus.find(x => x.seat === seat);
+      newLogs.push({ seat: Number(seat), name: stu ? stu.name : '', delta, reason, ts: Date.now() });
+    });
+    await fbPatch('scores', patches);
+    await fbTxn('pointLogs', old => newLogs.concat(Array.isArray(old) ? old.filter(Boolean) : []).slice(0, 30));
+    return { ok: true };
+  }
+
+  if (fn === 'resetAllScores') {
+    await Promise.all([fbPut('scores', null), fbPut('lottery', null), fbPut('lotteryQuota', null), fbPut('pointLogs', null)]);
+    return { ok: true };
+  }
+
+  if (fn === 'saveTheme') {
+    const t = String(args[0] || 'doodle');
+    if (THEME_IDS.indexOf(t) < 0) throw new Error('未知的版面模式');
+    await fbPut('theme', t);
+    return { ok: true };
+  }
+
   if (fn === 'saveStudents') {
     const list = args[0] || [];
     await fbPut('students', list);
@@ -1522,6 +1729,7 @@ function fitVertical(){
 window.addEventListener('resize', ()=>{ fitVertical(); });
 
 function renderAll(){
+  if (S.board && S.board.theme && !S.sandbox) applyTheme(S.board.theme);
   renderDate(); renderLeft(); renderRight();
   if (S.adminOpen) adminRefresh();
 }
@@ -2952,6 +3160,7 @@ function renderAdmin(){
   else if (S.tab === 'register') { body.innerHTML = '<div id="regTop"></div><div id="regSeats"></div>'; renderRegTop(); renderRegSeats(); }
   else if (S.tab === 'track') body.innerHTML = viewTrack();
   else if (S.tab === 'points') body.innerHTML = viewPoints();
+  else if (S.tab === 'theme') body.innerHTML = viewTheme();
   else body.innerHTML = viewRoster();
 }
 
@@ -3193,6 +3402,32 @@ function viewPoints(){
 }
 
 /* ---------- 分頁五：班級名單設定（直接存 Firebase，免用試算表） ---------- */
+const THEMES = [
+  { id:'doodle', name:'可愛手繪插圖', desc:'粗框線、馬卡龍色塊、插畫小圖示（預設）', bg:'#FFFCF6', panel:'#FFFEFA', bar:'#A8D3E6', ink:'#3E3A39', dots:['#F2A497','#F6D27A','#B9DAA5'], radius:14, bw:3 },
+  { id:'chalk',  name:'傳統黑板',     desc:'墨綠黑板、木頭邊框、粉筆白字', bg:'#4B3526', panel:'#2F4B3F', bar:'#3F6F7D', ink:'#F3F0E6', frame:'#A87B52', dots:['#E0685D','#E8D26A','#9BE07A'], radius:6, bw:5 },
+  { id:'muji',   name:'日式無印',     desc:'米白底、極細線條、低彩度自然色', bg:'#F6F4EF', panel:'#FFFFFF', bar:'#D7DFE2', ink:'#3B3A37', dots:['#B5524A','#E8DEC8','#7E9C6E'], radius:4, bw:1 }
+];
+function viewTheme(){
+  const cur = (S.board && S.board.theme) || 'doodle';
+  let h = '<section class="card"><h3>🎨 教室大螢幕版面模式</h3>'+
+    '<div class="note">選一種風格，教室大螢幕會在幾秒內自動換上（設定存在 Firebase，所有裝置同步）。後台與各種彈窗（抽獎、寵物樂園）維持手繪風，確保好讀。</div>'+
+    '<div class="themes">';
+  THEMES.forEach(t => {
+    const on = t.id === cur, bw2 = Math.min(t.bw, 2);
+    h += '<button type="button" class="themecard'+(on?' on':'')+'" data-act="theme" data-t="'+t.id+'">'+
+      '<div style="background:'+t.bg+';padding:12px;border-radius:10px;border:2px solid rgba(0,0,0,.12);margin-bottom:10px">'+
+        '<div style="background:'+t.panel+';border:'+t.bw+'px solid '+(t.frame||t.ink)+';border-radius:'+t.radius+'px;overflow:hidden">'+
+          '<div style="background:'+t.bar+';height:22px;border-bottom:'+bw2+'px solid '+t.ink+'"></div>'+
+          '<div style="padding:8px;display:flex;gap:6px;align-items:center">'+
+            t.dots.map(c => '<span style="width:18px;height:18px;border-radius:'+(t.id==='muji'?'3px':'28%')+';background:'+c+';border:'+bw2+'px solid '+t.ink+'"></span>').join('')+
+            '<span style="flex:1;height:6px;border-radius:3px;background:'+t.ink+';opacity:.35"></span>'+
+          '</div></div></div>'+
+      '<b style="font-size:21px">'+t.name+'</b>'+(on?' <span class="chip">使用中 ✓</span>':'')+
+      '<div class="sub">'+t.desc+'</div></button>';
+  });
+  return h + '</div></section>';
+}
+
 function viewRoster(){
   const stus = (S.board && S.board.students) || [];
   const lines = stus.map(s => s.seat + ' ' + s.name).join('\n');
@@ -3234,6 +3469,18 @@ adBody.addEventListener('click', async ev=>{
   const act = btn.dataset.act;
   const card = btn.closest('.card');
   const day = card && card.dataset.day;
+
+  if (act === 'theme') {
+    const t = btn.dataset.t, meta = THEMES.find(x => x.id === t);
+    try {
+      await gs('saveTheme', t);
+      applyTheme(t); if (S.board) S.board.theme = t;
+      S.writeSeq++; S.lastJson = '';
+      renderAdmin();
+      toast('已切換版面：' + (meta ? meta.name : t));
+    } catch(e){ handleErr(e); }
+    return;
+  }
 
   if (act === 'saveRoster') {
     const raw = ($('#rosterTxt').value || '').trim();
