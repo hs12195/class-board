@@ -397,6 +397,21 @@ svg{display:block}
 @keyframes ringBell{0%,100%{transform:rotate(0)}20%{transform:rotate(14deg)}40%{transform:rotate(-14deg)}60%{transform:rotate(10deg)}80%{transform:rotate(-10deg)}}
 .timer-done-shake{animation:ringBell .6s ease-in-out 3}
 
+
+/* ---------- 🧪 老師專用：學生體驗沙盒模式 ---------- */
+.sandbox-banner{
+  position:sticky;top:0;z-index:45;
+  display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  padding:8px 14px;background:#FFE066;border-bottom:3px solid var(--ink);
+  font-size:16px;font-weight:700;box-shadow:0 3px 0 rgba(0,0,0,.15)
+}
+body.sandbox-on .sandbox-banner{display:flex}
+body.sandbox-on #front{height:calc(100vh - 52px);height:calc(100dvh - 52px)}
+.sb-acts{display:flex;gap:8px;flex-wrap:wrap}
+.sb-btn{padding:4px 12px;border:2px solid var(--ink);border-radius:999px;background:#FFF;font-size:14px;font-weight:700;box-shadow:2px 2px 0 var(--ink)}
+.sb-btn.warn{background:var(--coral)}
+.sb-btn.sky{background:var(--sky)}
+
 /* 排行榜 */
 .rank-list{display:flex;flex-direction:column;gap:8px}
 .rank-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px solid var(--ink);border-radius:14px;background:var(--paper);font-size:19px}
@@ -538,6 +553,16 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
     <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 4 L17 12 L9 20" fill="none" stroke="#3E3A39" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   </defs>
 </svg>
+
+<!-- ============ 🧪 老師專用：學生體驗沙盒模式提示條 ============ -->
+<div class="sandbox-banner" id="sandboxBanner">
+  <span>🧪 <b>【測試模擬模式中】</b>此處所有抽獎、花星星、養寵物、買配件都不會動到班級真實資料！</span>
+  <div class="sb-acts">
+    <button type="button" class="sb-btn sky" id="sbGivePts">＋測試加 30 顆星星</button>
+    <button type="button" class="sb-btn" id="sbReset">↺ 重設測試狀態</button>
+    <button type="button" class="sb-btn warn" id="sbExit">✕ 結束測試回後台</button>
+  </div>
+</div>
 
 <!-- ============ 前台：教室大螢幕 ============ -->
 <div id="front">
@@ -694,6 +719,7 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
   <div class="ad-wrap">
     <header class="ad-head">
       <h2><svg aria-hidden="true"><use href="#i-board"/></svg>老師後台</h2>
+      <button class="btn" id="adSandbox" style="background:#FFE066">🧪 模擬學生測試</button>
       <button class="btn sky" id="adSync">手動立即同步</button>
       <button class="btn plain" id="adBack">返回前台</button>
     </header>
@@ -755,6 +781,7 @@ const S = {
   sel:null, mode:'done', tempOpen:false, delArm:false, resetArm:false,
   lottoSeat:null, lottoBusy:false, lottoMode:0,
   ptSeats:new Set(), ptReason:'發表踴躍',
+  sandbox:false, sandboxBoard:null, sandboxBackup:null,
   pending:0, writeSeq:0, lastWrite:0, queue:Promise.resolve(), fetching:false, online:true,
   batchBuffer:{}, batchTimer:null
 };
@@ -970,6 +997,131 @@ function buildBoardFromDb(rawDb, targetDate){
 /* 統一後端呼叫轉接層（所有操作直接讀寫 Firebase Realtime Database） */
 async function gs(fn){
   const args = Array.prototype.slice.call(arguments, 1);
+
+  /* 🧪 沙盒測試模式：所有操作在記憶體虛擬副本中執行，完全不寫入真實 Firebase */
+  if (S.sandbox) {
+    const sb = S.sandboxBoard;
+    if (fn === 'getBoard') return JSON.parse(JSON.stringify(sb));
+
+    if (fn === 'drawLottery') {
+      const seat = Number(args[1]);
+      const pts = Math.floor(Math.random() * 3) + 1;
+      sb.lotteryToday[seat] = (sb.lotteryToday[seat] || 0) + pts;
+      sb.lotteryUsedCount[seat] = (sb.lotteryUsedCount[seat] || 0) + 1;
+      sb.scoreTotal[seat] = (sb.scoreTotal[seat] || 0) + pts;
+      return { ok: true, points: pts, todayTotal: sb.lotteryToday[seat], usedCount: sb.lotteryUsedCount[seat], total: sb.scoreTotal[seat] };
+    }
+
+    if (fn === 'petAction') {
+      const actorSeat = Number(args[0]);
+      const ownerSeat = Number(args[1]);
+      const slotIdx = Number(args[2]);
+      const action = String(args[3]);
+      const actor = sb.students.find(s => s.seat === actorSeat);
+      const owner = sb.students.find(s => s.seat === ownerSeat);
+      if (!actor || !owner) throw new Error('找不到學生資料');
+
+      const curScore = Number(sb.scoreTotal[actorSeat] || 0);
+      if (!sb.pets) sb.pets = {};
+      if (!sb.pets[ownerSeat]) sb.pets[ownerSeat] = { slots: [] };
+      const ownerSlots = sb.pets[ownerSeat].slots;
+      const actorSlots = (sb.pets[actorSeat] && sb.pets[actorSeat].slots) || [];
+      const actorHasHatched = actorSlots.some(p => p && p.stage === 'pet');
+
+      const SHOP_ITEMS = {
+        acc_crown:  { id:'acc_crown',  type:'acc',   icon:'👑', name:'閃亮小皇冠',   cost:8 },
+        acc_bow:    { id:'acc_bow',    type:'acc',   icon:'🎀', name:'粉紅蝴蝶結',   cost:5 },
+        acc_scarf:  { id:'acc_scarf',  type:'acc',   icon:'🧣', name:'暖呼呼圍巾',   cost:6 },
+        acc_glasses:{ id:'acc_glasses',type:'acc',   icon:'🕶️', name:'酷炫太陽眼鏡', cost:7 },
+        acc_wing:   { id:'acc_wing',   type:'acc',   icon:'🪽', name:'天使小翅膀',   cost:10 },
+        snack_cake: { id:'snack_cake', type:'snack', icon:'🍰', name:'草莓鮮奶油蛋糕', cost:3 },
+        snack_star: { id:'snack_star', type:'snack', icon:'🍭', name:'彩虹棒棒糖',   cost:2 }
+      };
+
+      if (SHOP_ITEMS[action]) {
+        const item = SHOP_ITEMS[action];
+        const p = ownerSlots[slotIdx];
+        if (!p || p.stage !== 'pet') throw new Error('要等小寵物破殼出生後才能購買喔！');
+        if (curScore < item.cost) throw new Error('測試星星不足 ' + item.cost + ' 分（可點上方「＋測試加 30 顆星星」）');
+        if (item.type === 'acc') {
+          p.accessories = Array.isArray(p.accessories) ? p.accessories : [];
+          if (p.accessories.includes(item.icon)) throw new Error('已經擁有此配件囉！');
+          p.accessories.push(item.icon);
+          p.equippedAcc = item.icon;
+          p.lastSpeech = '哇～謝謝主人送我「' + item.name + ' ' + item.icon + '」！';
+        } else {
+          p.careCount = Number(p.careCount || 1) + (item.id === 'snack_cake' ? 3 : 2);
+          p.lastSpeech = '嗚哇！是高級的「' + item.name + ' ' + item.icon + '」！幸福爆表！';
+        }
+        sb.scoreTotal[actorSeat] = curScore - item.cost;
+        return { ok: true, newScore: sb.scoreTotal[actorSeat], slots: ownerSlots, shopPurchased: item };
+      }
+
+      if (action === 'equip_acc') {
+        const iconToEquip = String(args[4] || '');
+        const p = ownerSlots[slotIdx];
+        if (p && p.stage === 'pet') p.equippedAcc = (p.equippedAcc === iconToEquip) ? '' : iconToEquip;
+        return { ok: true, newScore: curScore, slots: ownerSlots };
+      }
+
+      let cost = (action === 'adopt') ? 10 : (action === 'unlock2' ? 25 : 1);
+      if (actorSeat !== ownerSeat && !actorHasHatched) throw new Error('要等自己的小寵物破殼出生之後，才能去同學家串門子喔！');
+      if (curScore < cost) throw new Error('測試星星不足 ' + cost + ' 分（可點上方「＋測試加 30 顆星星」）');
+
+      const SPECIES_POOL = [
+        { id:'shiba', name:'暖陽柴犬', icon:'🐶', rarity:'常見' },
+        { id:'cat', name:'橘貓團子', icon:'🐱', rarity:'常見' },
+        { id:'rabbit', name:'垂耳兔寶', icon:'🐰', rarity:'常見' },
+        { id:'fox', name:'九尾小狐', icon:'🦊', rarity:'稀有' },
+        { id:'owl', name:'星星貓頭鷹', icon:'🦉', rarity:'稀有' },
+        { id:'dragon', name:'水晶小飛龍', icon:'🐉', rarity:'傳說' },
+        { id:'unicorn', name:'彩虹獨角獸', icon:'🦄', rarity:'傳說' }
+      ];
+      let hatchedNow = null, eventCard = null, bonusDraw = false, bonusPts = 0;
+
+      if (action === 'adopt') {
+        ownerSlots[0] = { stage:'egg', eggIcon:'🥚', growth:0, maxGrowth:5, careCount:0, memories:{}, lastSpeech:'（測試蛋）暖呼呼的神祕蛋誕生了！照顧 5 次就會破殼！' };
+      } else if (action === 'unlock2') {
+        ownerSlots[1] = { stage:'egg', eggIcon:'✨🥚', growth:0, maxGrowth:5, careCount:0, memories:{}, lastSpeech:'（測試蛋）第二顆神祕蛋登場！' };
+      } else {
+        const p = ownerSlots[slotIdx];
+        if (!p) throw new Error('尚未領蛋');
+        if (p.stage === 'egg') {
+          p.growth = (p.growth || 0) + 1;
+          if (p.growth >= 5) {
+            const sp = SPECIES_POOL[Math.floor(Math.random() * SPECIES_POOL.length)];
+            Object.assign(p, { stage:'pet', speciesId:sp.id, speciesName:sp.name, icon:sp.icon, rarity:sp.rarity, careCount:1, lastSpeech:'咔啦咔啦——「'+sp.name+' '+sp.icon+'」破殼出生啦！' });
+            hatchedNow = sp;
+          } else {
+            p.lastSpeech = '蛋殼搖晃了一下！還差 ' + (5 - p.growth) + ' 點成長值破殼～';
+          }
+        } else {
+          p.careCount = (p.careCount || 1) + 1;
+          p.memories = p.memories || {};
+          const m = p.memories[actorSeat] || { name: actor.name, total: 0 };
+          m.total++;
+          p.memories[actorSeat] = m;
+          p.lastSpeech = actorSeat === ownerSeat
+            ? '謝謝主人的照顧！這是我第 ' + p.careCount + ' 次感受到你的愛心 ❤️'
+            : actorSeat + ' 號 ' + actor.name + ' 來串門子照顧我第 ' + m.total + ' 次啦！好開心！';
+        }
+        if (Math.random() < 0.5) {
+          eventCard = { title:'🍀 測試幸運事件卡', desc:'小寵物在草叢發現一顆閃亮星星，回贈給你 +1 分！' };
+          bonusPts = 1;
+        }
+      }
+      sb.scoreTotal[actorSeat] = curScore - cost + bonusPts;
+      return { ok: true, newScore: sb.scoreTotal[actorSeat], slots: ownerSlots, hatchedNow, eventCard, bonusDraw };
+    }
+
+    if (fn === 'addPoints') {
+      const seats = args[0] || [], delta = Number(args[1] || 0);
+      seats.forEach(st => { sb.scoreTotal[st] = (sb.scoreTotal[st] || 0) + delta; });
+      return { ok: true };
+    }
+    return { ok: true };
+  }
+
 
   if (fn === 'getBoard') {
     const viewDate = args[0] || null;
@@ -1585,6 +1737,7 @@ function renderAll(){
 
 const LS_BOARD_KEY = 'CLASS_BOARD_FIREBASE_V1';
 function saveLocalSnap(jsonStr){
+  if (S.sandbox) return;
   try { localStorage.setItem(LS_BOARD_KEY, jsonStr); } catch(e){}
 }
 function bootFromLocalSnap(){
@@ -1603,6 +1756,7 @@ function bootFromLocalSnap(){
 
 function dotBusy(on){ $('#dot').classList.toggle('busy', on); }
 async function fetchBoard(force){
+  if (S.sandbox) return;
   if (!force && (S.pending > 0 || S.batchTimer || Date.now() - S.lastWrite < 2000)) return;
   if (S.fetching) return;
   S.fetching = true; dotBusy(true);
@@ -2748,6 +2902,76 @@ $('#pickActions').addEventListener('click', async ev=>{
   }
 });
 
+
+/* =====================================================
+ * 🧪 老師專用：學生體驗沙盒模式控制
+ * ===================================================== */
+function initSandboxData(){
+  const base = JSON.parse(JSON.stringify(S.board || {
+    today: getTodayTaipei(), date: getTodayTaipei(), weekday: true,
+    students: [{ seat:1, name:'測試一號' }, { seat:2, name:'測試二號' }],
+    items: [], status: {}, carry: [], lines: [],
+    lotteryToday: {}, lotteryUsedCount: {}, lotteryExtraQuota: {}, scoreTotal: {}, pets: {}
+  }));
+  // 幫全班每位同學在測試環境中預設發放 30 顆測試星星 + 1 次測試抽獎機會，方便老師直接試玩！
+  base.students.forEach(s => {
+    base.scoreTotal[s.seat] = Math.max(30, Number(base.scoreTotal[s.seat] || 0));
+    base.lotteryExtraQuota[s.seat] = Number(base.lotteryExtraQuota[s.seat] || 0) + 1;
+  });
+  return base;
+}
+
+function enterSandbox(){
+  if (!S.board) { toast('資料尚未載入完成'); return; }
+  S.sandboxBackup = JSON.parse(JSON.stringify(S.board));
+  S.sandboxBoard = initSandboxData();
+  S.sandbox = true;
+  S.board = S.sandboxBoard;
+  S.adminOpen = false;
+  document.body.classList.remove('admin-open');
+  document.body.classList.add('sandbox-on');
+  S.lastJson = '';
+  renderAll();
+  setTimeout(fitVertical, 80);
+  toast('🧪 已進入「學生體驗沙盒模式」，全班預設 30 顆測試星星可隨意試玩！');
+}
+
+function exitSandbox(){
+  S.sandbox = false;
+  if (S.sandboxBackup) {
+    S.board = S.sandboxBackup;
+    S.sandboxBackup = null;
+  }
+  S.sandboxBoard = null;
+  document.body.classList.remove('sandbox-on');
+  S.lastJson = '';
+  openAdmin();
+  toast('已結束測試，班級真實資料完全未受影響 ✓');
+}
+
+$('#adSandbox').addEventListener('click', enterSandbox);
+$('#sbExit').addEventListener('click', exitSandbox);
+$('#sbReset').addEventListener('click', ()=>{
+  if (!S.sandbox) return;
+  S.board = S.sandboxBackup;
+  S.sandboxBoard = initSandboxData();
+  S.board = S.sandboxBoard;
+  S.lastJson = '';
+  renderAll();
+  toast('↺ 測試環境已重設為初始狀態（每人 30 顆測試星星）');
+});
+$('#sbGivePts').addEventListener('click', ()=>{
+  if (!S.sandbox || !S.sandboxBoard) return;
+  S.sandboxBoard.students.forEach(s => {
+    S.sandboxBoard.scoreTotal[s.seat] = Number(S.sandboxBoard.scoreTotal[s.seat] || 0) + 30;
+    S.sandboxBoard.lotteryExtraQuota[s.seat] = Number(S.sandboxBoard.lotteryExtraQuota[s.seat] || 0) + 1;
+  });
+  S.lastJson = '';
+  renderAll();
+  if ($('#petOv').classList.contains('show')) renderPetPark();
+  toast('⭐ 已幫測試環境全班各加 30 顆星星與 1 次抽獎機會！');
+});
+
 /* =====================================================
  * 連點上方插圖的鉛筆三下 -> 直接開啟老師後台
  * ===================================================== */
@@ -3006,7 +3230,10 @@ function viewPoints(){
   const b = S.board; if (!b) return '<div class="empty-ad">載入中…</div>';
   const sc = b.scoreTotal || {};
 
-  let h = '<section class="card" style="background:#FFF8E1"><h3>🌟 老師額外獎勵：發放星星抽獎機會</h3>';
+  let h = '<section class="card" style="background:#EBF6FC"><h3>🧪 老師專用：學生前台體驗測試區（安全沙盒）</h3>'+
+    '<div class="sub" style="margin-bottom:10px">想測試學生點星星抽獎、花星星領蛋孵化、穿戴配件、去寵物街串門子，但<b>不想弄亂班級真實分數</b>嗎？點下方按鈕進入隔離測試環境，隨意試玩完一鍵退出即可！</div>'+
+    '<button type="button" class="btn" style="background:#FFE066" onclick="enterSandbox()">🧪 進入學生體驗沙盒模式（自動發給測試用 30 顆星星）</button></section>';
+  h += '<section class="card" style="background:#FFF8E1"><h3>🌟 老師額外獎勵：發放星星抽獎機會</h3>';
   h += '<div class="sub" style="margin-bottom:10px">點選全班或個別學生按鈕後，前台名字後方會<b>重新變回閃亮星星 ⭐</b>，可再次點擊抽獎！</div>';
   h += '<div style="margin-bottom:12px"><button class="btn green" data-act="grantLottoAll">🌟 全班每人再抽獎一次</button></div>';
   h += '<div class="seats">';
