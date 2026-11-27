@@ -360,6 +360,43 @@ svg{display:block}
 .event-banner h4{font-size:19px;color:var(--red);margin-bottom:4px}
 .event-banner p{font-size:16px;line-height:1.45}
 
+
+/* ---------- 🎒 寵物專屬小配件／點心屋 ---------- */
+.pet-avatar-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;margin:20px 0 6px}
+.pet-avatar-wrap .pet-avatar{margin:0}
+.pet-acc-badge{position:absolute;top:-14px;right:-16px;font-size:34px;filter:drop-shadow(2px 2px 0 var(--ink));pointer-events:none;animation:twinkle 2.2s ease-in-out infinite}
+.pet-acc-list{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;min-height:24px;margin-bottom:6px;font-size:18px}
+.pet-shop-btn{width:100%;margin-top:8px;min-height:42px;border:2px solid var(--ink);border-radius:12px;background:var(--yellow);font-size:15px;font-weight:700;box-shadow:2px 2px 0 var(--ink)}
+.pet-shop-btn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink)}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px;margin-top:10px}
+.shop-item{padding:12px 10px;border:var(--bd);border-radius:16px;background:var(--paper);box-shadow:3px 3px 0 var(--ink);display:flex;flex-direction:column;align-items:center;text-align:center}
+.shop-item.owned{background:#FFF8E1}
+.shop-ic{font-size:42px;line-height:1.1;margin-bottom:4px}
+.shop-nm{font-size:17px;font-weight:700}
+.shop-ds{font-size:13px;opacity:.8;margin:4px 0 8px;min-height:2.6em}
+.shop-buy{width:100%;min-height:40px;border:2px solid var(--ink);border-radius:12px;background:var(--green);font-size:15px;font-weight:700}
+.shop-buy.equip{background:var(--sky)}
+
+/* ---------- ⏱️ 大字體視覺倒數計時器 ---------- */
+.timer-modal{width:min(540px,100%);text-align:center}
+.timer-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.timer-preset-btn{min-height:48px;border:var(--bd);border-radius:14px;background:var(--card);font-size:18px;font-weight:700;box-shadow:2px 2px 0 var(--ink)}
+.timer-preset-btn.on{background:var(--yellow)}
+.timer-ring-wrap{position:relative;width:270px;height:270px;margin:6px auto 14px;display:grid;place-items:center}
+.timer-ring-svg{width:100%;height:100%;transform:rotate(-90deg)}
+.timer-ring-bg{fill:none;stroke:#EAE4D7;stroke-width:16}
+.timer-ring-fg{fill:none;stroke:var(--tickgreen);stroke-width:16;stroke-linecap:round;transition:stroke-dashoffset .35s linear,stroke .3s}
+.timer-ring-fg.warn{stroke:var(--yellow)}
+.timer-ring-fg.urgent{stroke:var(--red)}
+.timer-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.timer-digits{font-size:66px;font-weight:700;line-height:1;letter-spacing:2px;font-variant-numeric:tabular-nums}
+.timer-label{margin-top:6px;padding:3px 12px;border:2px solid var(--ink);border-radius:999px;background:var(--odd);font-size:16px;font-weight:700}
+.timer-custom{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;font-size:17px}
+.timer-custom input{width:76px;min-height:44px;text-align:center;border:var(--bd);border-radius:12px;font:inherit;font-size:20px;font-weight:700}
+.timer-ctrls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@keyframes ringBell{0%,100%{transform:rotate(0)}20%{transform:rotate(14deg)}40%{transform:rotate(-14deg)}60%{transform:rotate(10deg)}80%{transform:rotate(-10deg)}}
+.timer-done-shake{animation:ringBell .6s ease-in-out 3}
+
 /* 排行榜 */
 .rank-list{display:flex;flex-direction:column;gap:8px}
 .rank-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px solid var(--ink);border-radius:14px;background:var(--paper);font-size:19px}
@@ -555,6 +592,7 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
   <div class="fbar">
     <span class="sync"><i class="dot" id="dot"></i><span id="syncTxt">同步中…</span></span>
     <div class="fbar-acts">
+      <button class="tbtn" id="timerBtn" style="background:var(--sky);font-weight:700">⏱️ 計時器</button>
       <button class="tbtn" id="petBtn" style="background:var(--green);font-weight:700">🐾 寵物樂園</button>
       <button class="tbtn rank" id="rankBtn">🏆 班級積分榜</button>
       <button class="tbtn" id="fsBtn">⛶ 全螢幕</button>
@@ -605,14 +643,48 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
       <select id="petActorSel" class="pet-sel" aria-label="選擇你的座號姓名"></select>
       <span class="pet-pts-badge" id="petMyPts">⭐ 積分：0 分</span>
     </div>
-    <div class="pet-nav">
-      <button type="button" class="pet-nav-btn on" data-pettab="my">🏡 我的寵物小屋</button>
-      <button type="button" class="pet-nav-btn" data-pettab="street">🏘️ 班級寵物街（串門子）</button>
+    <div class="pet-nav" style="grid-template-columns:repeat(3,1fr)">
+      <button type="button" class="pet-nav-btn on" data-pettab="my">🏡 我的寵物</button>
+      <button type="button" class="pet-nav-btn" data-pettab="shop">🎒 配件點心屋</button>
+      <button type="button" class="pet-nav-btn" data-pettab="street">🏘️ 寵物街</button>
     </div>
     <div id="petBody"></div>
     <div id="petEventBox"></div>
     <div class="row2">
       <button type="button" class="btn plain grow" id="petClose">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ⏱️ 大字體視覺倒數計時器視窗 ============ -->
+<div class="overlay" id="timerOv" role="dialog" aria-modal="true" aria-labelledby="timerTtl">
+  <div class="modal timer-modal" id="timerModalBox">
+    <h2 id="timerTtl" style="justify-content:center">⏱️ 課堂視覺倒數計時器</h2>
+    <div class="timer-presets" id="timerPresets">
+      <button type="button" class="timer-preset-btn" data-tmin="1" data-tlabel="⚡ 1 分鐘衝刺">1 分鐘</button>
+      <button type="button" class="timer-preset-btn" data-tmin="3" data-tlabel="🎒 收書包整隊">3 分鐘</button>
+      <button type="button" class="timer-preset-btn on" data-tmin="5" data-tlabel="📖 安靜自習時間">5 分鐘</button>
+      <button type="button" class="timer-preset-btn" data-tmin="10" data-tlabel="☀️ 下課休息時間">10 分鐘</button>
+    </div>
+    <div class="timer-ring-wrap">
+      <svg class="timer-ring-svg" viewBox="0 0 240 240" aria-hidden="true">
+        <circle class="timer-ring-bg" cx="120" cy="120" r="104"/>
+        <circle class="timer-ring-fg" id="timerRingFg" cx="120" cy="120" r="104" stroke-dasharray="653.45" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-center">
+        <div class="timer-digits" id="timerDigits">05:00</div>
+        <div class="timer-label" id="timerTag">📖 安靜自習時間</div>
+      </div>
+    </div>
+    <div class="timer-custom">
+      <span>自訂分鐘：</span>
+      <input type="number" id="timerCustomMin" min="1" max="60" value="5" aria-label="自訂分鐘數">
+      <button type="button" class="btn sm sky" id="timerSetCustom">設定</button>
+    </div>
+    <div class="timer-ctrls">
+      <button type="button" class="btn green" id="timerStartBtn">▶ 開始</button>
+      <button type="button" class="btn plain" id="timerResetBtn">↺ 重設</button>
+      <button type="button" class="btn plain" id="timerCloseBtn">關閉</button>
     </div>
   </div>
 </div>
@@ -1056,6 +1128,79 @@ async function gs(fn){
     const actorRec = allPets[actorSeat] || {};
     const actorSlots = Array.isArray(actorRec.slots) ? actorRec.slots : (actorRec.slots ? Object.values(actorRec.slots) : []);
     const actorHasHatched = actorSlots.some(p => p && p.stage === 'pet');
+
+    // 配件與高級點心商店目錄
+    const SHOP_ITEMS = {
+      acc_crown:  { id:'acc_crown',  type:'acc',   icon:'👑', name:'閃亮小皇冠',   cost:8,  desc:'戴在頭上超威風！寵物街也看得到' },
+      acc_bow:    { id:'acc_bow',    type:'acc',   icon:'🎀', name:'粉紅蝴蝶結',   cost:5,  desc:'可愛度破表的經典造型蝴蝶結' },
+      acc_scarf:  { id:'acc_scarf',  type:'acc',   icon:'🧣', name:'暖呼呼圍巾',   cost:6,  desc:'冬天保暖必備，氣質大加分' },
+      acc_glasses:{ id:'acc_glasses',type:'acc',   icon:'🕶️', name:'酷炫太陽眼鏡', cost:7,  desc:'戴上秒變全班最潮的明星寵物' },
+      acc_wing:   { id:'acc_wing',   type:'acc',   icon:'🪽', name:'天使小翅膀',   cost:10, desc:'夢幻系稀有配件，閃閃發光' },
+      snack_cake: { id:'snack_cake', type:'snack', icon:'🍰', name:'草莓鮮奶油蛋糕', cost:3, desc:'高級點心！照顧次數直接 +3' },
+      snack_star: { id:'snack_star', type:'snack', icon:'🍭', name:'彩虹棒棒糖',   cost:2,  desc:'甜蜜點心！照顧次數 +2 並提升好感' }
+    };
+
+    if (SHOP_ITEMS[action]) {
+      const item = SHOP_ITEMS[action];
+      if (actorSeat !== ownerSeat) throw new Error('只能在自己的配件點心屋購買喔！');
+      const targetPet = actorSlots[slotIdx];
+      if (!targetPet || targetPet.stage !== 'pet') {
+        throw new Error('要等小寵物破殼出生之後，才能幫牠買配件或點心喔！');
+      }
+      if (item.type === 'acc') {
+        const owned = Array.isArray(targetPet.accessories) ? targetPet.accessories : [];
+        if (owned.includes(item.icon)) throw new Error('這隻小寵物已經擁有「' + item.name + '」囉！');
+      }
+      if (curScore < item.cost) {
+        throw new Error('星星積分不足 ' + item.cost + ' 分，快去集點吧！');
+      }
+
+      const txShop = await fbTxn('pets/' + ownerSeat, cur => {
+        const rec = cur || { slots: [] };
+        const slots = Array.isArray(rec.slots) ? rec.slots.slice() : (rec.slots ? Object.values(rec.slots) : []);
+        const p = slots[slotIdx];
+        if (!p || p.stage !== 'pet') return undefined;
+        if (item.type === 'acc') {
+          const owned = Array.isArray(p.accessories) ? p.accessories.slice() : [];
+          if (owned.includes(item.icon)) return undefined;
+          owned.push(item.icon);
+          p.accessories = owned;
+          p.equippedAcc = item.icon;
+          p.lastSpeech = '哇～謝謝主人送我「' + item.name + ' ' + item.icon + '」！戴起來是不是超好看？';
+        } else {
+          const addCare = item.id === 'snack_cake' ? 3 : 2;
+          p.careCount = Number(p.careCount || 1) + addCare;
+          p.lastSpeech = '嗚哇！是高級的「' + item.name + ' ' + item.icon + '」！幸福爆表，成長大躍進！';
+        }
+        slots[slotIdx] = p;
+        return { slots };
+      });
+      if (!txShop.committed) throw new Error('購買未完成，請再試一次');
+
+      await fbPut('scores/' + actorSeat, SV_INC(-item.cost));
+      await fbTxn('pointLogs', old => [{
+        seat: actorSeat, name: actor.name, delta: -item.cost,
+        reason: '🎒 購買寵物' + (item.type === 'acc' ? '配件：' : '點心：') + item.name,
+        ts: Date.now()
+      }].concat(Array.isArray(old) ? old.filter(Boolean) : []).slice(0, 30));
+
+      const newScore = Number(await fbGet('scores/' + actorSeat)) || 0;
+      return { ok: true, newScore, slots: txShop.value.slots, shopPurchased: item };
+    }
+
+    if (action === 'equip_acc') {
+      const iconToEquip = String(args[4] || '');
+      const txEq = await fbTxn('pets/' + ownerSeat, cur => {
+        const rec = cur || { slots: [] };
+        const slots = Array.isArray(rec.slots) ? rec.slots.slice() : (rec.slots ? Object.values(rec.slots) : []);
+        const p = slots[slotIdx];
+        if (!p || p.stage !== 'pet') return undefined;
+        p.equippedAcc = (p.equippedAcc === iconToEquip) ? '' : iconToEquip;
+        slots[slotIdx] = p;
+        return { slots };
+      });
+      return { ok: true, newScore: curScore, slots: txEq.value ? txEq.value.slots : actorSlots };
+    }
 
     // 規則檢查
     let cost = 0;
@@ -2037,12 +2182,12 @@ function renderPetPark(){
 
   if (PetUI.tab === 'my') {
     let h = '<div class="pet-slots">';
-    // 第一格寵物
     h += renderSlotCard(actor, 0, mySlots[0], myPts, true);
-    // 第二格寵物（需第一隻出生後花 25 顆星星解鎖）
     h += renderSlotCard(actor, 1, mySlots[1], myPts, myHasHatched);
     h += '</div>';
     body.innerHTML = h;
+  } else if (PetUI.tab === 'shop') {
+    body.innerHTML = renderPetShop(actor, mySlots, myPts);
   } else {
     // 班級寵物街（串門子）
     let h = '';
@@ -2065,7 +2210,7 @@ function renderPetPark(){
         const dis = (!myHasHatched || myPts < 1) ? ' disabled' : '';
         h += '<div class="street-item">'+
           '<div class="street-who">'+s.seat+' 號 '+esc(s.name)+'</div>'+
-          '<div class="street-ic">'+p.icon+'</div>'+
+          '<div class="street-ic" style="position:relative;display:inline-block">'+p.icon+(p.equippedAcc?'<span style="position:absolute;top:-8px;right:-12px;font-size:22px">'+p.equippedAcc+'</span>':'')+'</div>'+
           '<div class="street-pet">'+esc(p.speciesName)+(mem?' · 友好度 '+mem:'')+'</div>'+
           '<div class="street-btns">'+
             '<button type="button" data-pact="feed" data-owner="'+s.seat+'" data-slot="0"'+dis+'>🍎 餵食</button>'+
@@ -2122,11 +2267,14 @@ function renderSlotCard(ownerSeat, slotIdx, pet, myPts, canUnlock){
   const cares = Number(pet.careCount || 1);
   const lv = cares >= 20 ? '👑 華麗完全體' : (cares >= 8 ? '🌟 活潑成長期' : '🌱 可愛幼年期');
   const dis = myPts < 1 ? ' disabled' : '';
+  const ownedAcc = Array.isArray(pet.accessories) ? pet.accessories : [];
+  const eqAcc = pet.equippedAcc || '';
   return '<div class="pet-card">'+
     '<span class="pet-stage-tag">'+lv+'</span>'+
     '<span class="pet-rarity">'+(pet.rarity||'可愛')+'</span>'+
-    '<div class="pet-avatar">'+pet.icon+'</div>'+
+    '<div class="pet-avatar-wrap"><div class="pet-avatar">'+pet.icon+'</div>'+(eqAcc?'<span class="pet-acc-badge">'+eqAcc+'</span>':'')+'</div>'+
     '<div class="pet-name">'+esc(pet.speciesName)+' <small style="font-size:14px;opacity:.75">(照顧 '+cares+' 次)</small></div>'+
+    '<div class="pet-acc-list">'+(ownedAcc.length ? ownedAcc.map(ic => '<button type="button" title="點擊穿戴或卸下" data-pequip="'+ic+'" data-owner="'+ownerSeat+'" data-slot="'+slotIdx+'" style="border:1.5px solid var(--ink);border-radius:8px;padding:1px 6px;background:'+(ic===eqAcc?'var(--yellow)':'#FFF')+'">'+ic+'</button>').join('') : '<span style="font-size:13px;opacity:.6">尚無配件（可去配件點心屋選購）</span>')+'</div>'+
     '<div class="pet-speech">'+esc(pet.lastSpeech || '主人好！今天想跟我怎麼玩呢？')+'</div>'+
     '<div class="pet-acts">'+
       '<button type="button" class="pet-act-btn" data-pact="feed" data-owner="'+ownerSeat+'" data-slot="'+slotIdx+'"'+dis+'>🍎 餵食<small>-1 ⭐</small></button>'+
@@ -2152,6 +2300,27 @@ document.querySelectorAll('.pet-nav-btn').forEach(btn => {
 });
 
 $('#petBody').addEventListener('click', async ev=>{
+  const shopSlotBtn = ev.target.closest('[data-shopslot]');
+  if (shopSlotBtn && !PetUI.busy) {
+    PetUI.shopSlot = Number(shopSlotBtn.dataset.shopslot);
+    renderPetPark();
+    return;
+  }
+  const eqBtn = ev.target.closest('[data-pequip]');
+  if (eqBtn && !PetUI.busy) {
+    PetUI.busy = true;
+    try {
+      const res = await gs('petAction', PetUI.actorSeat, Number(eqBtn.dataset.owner), Number(eqBtn.dataset.slot), 'equip_acc', eqBtn.dataset.pequip);
+      if (res && res.ok) {
+        S.board.pets[Number(eqBtn.dataset.owner)] = { slots: res.slots };
+        S.writeSeq++; S.lastJson = '';
+        saveLocalSnap(JSON.stringify(S.board));
+        renderPetPark();
+      }
+    } catch(e) { handleErr(e); }
+    PetUI.busy = false;
+    return;
+  }
   const btn = ev.target.closest('[data-pact]');
   if (!btn || PetUI.busy) return;
   const act = btn.dataset.pact;
@@ -2183,6 +2352,9 @@ $('#petBody').addEventListener('click', async ev=>{
       if (res.hatchedNow) {
         bannerHtml += '<div class="event-banner"><h4>🎉 恭喜盲盒孵化成功！</h4><p>誕生了【<b>'+res.hatchedNow.rarity+'</b>】<b>'+res.hatchedNow.icon+' '+esc(res.hatchedNow.name)+'</b>！現在可以去「班級寵物街」串門子囉！</p></div>';
       }
+      if (res.shopPurchased) {
+        bannerHtml += '<div class="event-banner"><h4>🛍️ 購買成功！</h4><p>獲得了 <b>'+res.shopPurchased.icon+' '+esc(res.shopPurchased.name)+'</b>！</p></div>';
+      }
       if (res.eventCard) {
         bannerHtml += '<div class="event-banner"><h4>🃏 觸發事件卡片：'+esc(res.eventCard.title)+'</h4><p>'+esc(res.eventCard.desc)+'</p></div>';
       }
@@ -2193,6 +2365,179 @@ $('#petBody').addEventListener('click', async ev=>{
     renderPetPark();
   }
   PetUI.busy = false;
+});
+
+
+function renderPetShop(actor, mySlots, myPts){
+  const hatchedSlots = mySlots.map((p, idx) => ({ p, idx })).filter(x => x.p && x.p.stage === 'pet');
+  if (!hatchedSlots.length) {
+    return '<div class="note" style="background:#FFF3C4;padding:14px;border-radius:14px;border:2px solid var(--ink)">🥚 <b>尚未解鎖商店：</b>要等你的第一隻小寵物破殼出生之後，才能幫牠買可愛配件和高級點心喔！</div>';
+  }
+  if (PetUI.shopSlot == null || !mySlots[PetUI.shopSlot] || mySlots[PetUI.shopSlot].stage !== 'pet') {
+    PetUI.shopSlot = hatchedSlots[0].idx;
+  }
+  const targetPet = mySlots[PetUI.shopSlot];
+  const ownedAcc = Array.isArray(targetPet.accessories) ? targetPet.accessories : [];
+
+  let h = '';
+  if (hatchedSlots.length > 1) {
+    h += '<div style="display:flex;gap:8px;margin-bottom:10px">' + hatchedSlots.map(x =>
+      '<button type="button" class="btn sm '+(PetUI.shopSlot===x.idx?'sky':'plain')+'" data-shopslot="'+x.idx+'">給第 '+(x.idx+1)+' 隻（'+x.p.icon+' '+esc(x.p.speciesName)+'）</button>'
+    ).join('') + '</div>';
+  } else {
+    h += '<div class="note">正在幫 <b>'+targetPet.icon+' '+esc(targetPet.speciesName)+'</b> 挑選配件與高級點心（購買配件會自動幫牠戴上，也可隨時點擊切換穿戴）：</div>';
+  }
+
+  const catalog = [
+    { id:'acc_bow',     type:'acc',   icon:'🎀', name:'粉紅蝴蝶結',   cost:5,  desc:'可愛度破表的經典造型' },
+    { id:'acc_scarf',   type:'acc',   icon:'🧣', name:'暖呼呼圍巾',   cost:6,  desc:'冬天保暖氣質大加分' },
+    { id:'acc_glasses', type:'acc',   icon:'🕶️', name:'酷炫太陽眼鏡', cost:7,  desc:'秒變全班最潮明星寵物' },
+    { id:'acc_crown',   type:'acc',   icon:'👑', name:'閃亮小皇冠',   cost:8,  desc:'戴在頭上超威風！' },
+    { id:'acc_wing',    type:'acc',   icon:'🪽', name:'天使小翅膀',   cost:10, desc:'夢幻系稀有閃亮配件' },
+    { id:'snack_star',  type:'snack', icon:'🍭', name:'彩虹棒棒糖',   cost:2,  desc:'甜蜜點心！照顧次數 +2' },
+    { id:'snack_cake',  type:'snack', icon:'🍰', name:'草莓鮮奶油蛋糕', cost:3, desc:'高級大餐！照顧次數 +3' }
+  ];
+
+  h += '<div class="shop-grid">';
+  catalog.forEach(it => {
+    const isOwned = (it.type === 'acc' && ownedAcc.includes(it.icon));
+    const canBuy = !isOwned && myPts >= it.cost;
+    h += '<div class="shop-item'+(isOwned?' owned':'')+'">'+
+      '<div class="shop-ic">'+it.icon+'</div>'+
+      '<div class="shop-nm">'+esc(it.name)+'</div>'+
+      '<div class="shop-ds">'+esc(it.desc)+'</div>'+
+      (isOwned
+        ? '<button type="button" class="shop-buy equip" data-pequip="'+it.icon+'" data-owner="'+actor+'" data-slot="'+PetUI.shopSlot+'">'+(targetPet.equippedAcc===it.icon?'✨ 已穿戴（點我卸下）':'👗 點擊穿戴')+'</button>'
+        : '<button type="button" class="shop-buy" data-pact="'+it.id+'" data-owner="'+actor+'" data-slot="'+PetUI.shopSlot+'"'+(canBuy?'':' disabled')+'>⭐ '+it.cost+' 顆星星購買</button>')+
+      '</div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+/* =====================================================
+ * ⏱️ 課堂視覺倒數計時器（含溫和風鈴提示音）
+ * ===================================================== */
+const TimerUI = {
+  totalSec: 300,
+  remainSec: 300,
+  label: '📖 安靜自習時間',
+  running: false,
+  iv: null
+};
+
+function playChime(){
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const start = ctx.currentTime + idx * 0.22;
+      gain.gain.setValueAtTime(0.001, start);
+      gain.gain.exponentialRampToValueAtTime(0.28, start + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 1.1);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 1.15);
+    });
+  } catch(e){}
+}
+
+function renderTimer(){
+  const m = Math.floor(TimerUI.remainSec / 60);
+  const s = TimerUI.remainSec % 60;
+  $('#timerDigits').textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  $('#timerTag').textContent = TimerUI.label;
+
+  const CIRC = 653.45;
+  const ratio = TimerUI.totalSec > 0 ? (TimerUI.remainSec / TimerUI.totalSec) : 0;
+  const fg = $('#timerRingFg');
+  fg.style.strokeDashoffset = String(CIRC * (1 - ratio));
+  fg.classList.remove('warn', 'urgent');
+  if (TimerUI.remainSec <= 15 && TimerUI.remainSec > 0) fg.classList.add('urgent');
+  else if (ratio <= 0.3) fg.classList.add('warn');
+
+  const btn = $('#timerStartBtn');
+  if (TimerUI.running) {
+    btn.textContent = '⏸ 暫停';
+    btn.className = 'btn coral';
+  } else {
+    btn.textContent = TimerUI.remainSec === 0 ? '↺ 再來一次' : '▶ 開始';
+    btn.className = 'btn green';
+  }
+}
+
+function stopTimer(){
+  TimerUI.running = false;
+  clearInterval(TimerUI.iv);
+  TimerUI.iv = null;
+}
+
+function setTimerMinutes(mins, label){
+  stopTimer();
+  const safeMin = Math.max(1, Math.min(60, Number(mins) || 5));
+  TimerUI.totalSec = safeMin * 60;
+  TimerUI.remainSec = TimerUI.totalSec;
+  if (label) TimerUI.label = label;
+  $('#timerCustomMin').value = safeMin;
+  $('#timerModalBox').classList.remove('timer-done-shake');
+  renderTimer();
+}
+
+$('#timerBtn').addEventListener('click', ()=>{
+  renderTimer();
+  $('#timerOv').classList.add('show');
+});
+$('#timerCloseBtn').addEventListener('click', ()=>{
+  $('#timerOv').classList.remove('show');
+});
+$('#timerPresets').addEventListener('click', ev=>{
+  const btn = ev.target.closest('[data-tmin]');
+  if (!btn) return;
+  document.querySelectorAll('.timer-preset-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  setTimerMinutes(Number(btn.dataset.tmin), btn.dataset.tlabel);
+});
+$('#timerSetCustom').addEventListener('click', ()=>{
+  document.querySelectorAll('.timer-preset-btn').forEach(b => b.classList.remove('on'));
+  const m = Number($('#timerCustomMin').value) || 5;
+  setTimerMinutes(m, '⏱️ 課堂倒數 ' + m + ' 分鐘');
+});
+$('#timerResetBtn').addEventListener('click', ()=>{
+  stopTimer();
+  TimerUI.remainSec = TimerUI.totalSec;
+  $('#timerModalBox').classList.remove('timer-done-shake');
+  renderTimer();
+});
+$('#timerStartBtn').addEventListener('click', ()=>{
+  if (TimerUI.running) {
+    stopTimer();
+    renderTimer();
+    return;
+  }
+  if (TimerUI.remainSec <= 0) {
+    TimerUI.remainSec = TimerUI.totalSec;
+  }
+  $('#timerModalBox').classList.remove('timer-done-shake');
+  TimerUI.running = true;
+  renderTimer();
+  TimerUI.iv = setInterval(()=>{
+    if (TimerUI.remainSec > 0) {
+      TimerUI.remainSec--;
+      renderTimer();
+      if (TimerUI.remainSec === 0) {
+        stopTimer();
+        renderTimer();
+        playChime();
+        $('#timerModalBox').classList.add('timer-done-shake');
+        toast('🔔 時間到囉！');
+      }
+    }
+  }, 1000);
 });
 
 /* =====================================================
