@@ -323,6 +323,43 @@ svg{display:block}
 .pick-winner .pw-seat{font-size:22px;font-weight:700;color:var(--navy)}
 .pick-winner .pw-name{font-size:34px;font-weight:700;color:var(--red);margin-top:2px}
 
+
+/* ---------- 🐾 班級電子寵物樂園 ---------- */
+.pet-modal{width:min(680px,100%);max-height:92vh}
+.pet-top-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:var(--odd);border:var(--bd);border-radius:16px}
+.pet-sel{flex:1;min-width:170px;min-height:46px;padding:6px 12px;border:var(--bd);border-radius:12px;background:#FFF;font:inherit;font-size:18px;font-weight:700}
+.pet-pts-badge{padding:6px 14px;border:2.5px solid var(--ink);border-radius:999px;background:var(--yellow);font-size:18px;font-weight:700}
+.pet-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.pet-nav-btn{min-height:48px;border:var(--bd);border-radius:14px;background:var(--card);font-size:18px;font-weight:700}
+.pet-nav-btn.on{background:var(--sky);box-shadow:3px 3px 0 var(--ink)}
+.pet-slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}
+.pet-card{padding:16px;border:var(--bd);border-radius:20px;background:var(--paper);box-shadow:3px 3px 0 var(--ink);display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
+.pet-card.locked{background:#F4F1EA;justify-content:center;min-height:260px}
+.pet-stage-tag{position:absolute;top:10px;left:12px;padding:2px 10px;border:2px solid var(--ink);border-radius:999px;background:var(--yellow);font-size:13px;font-weight:700}
+.pet-rarity{position:absolute;top:10px;right:12px;padding:2px 10px;border:2px solid var(--ink);border-radius:999px;background:var(--coral);font-size:13px;font-weight:700}
+.pet-avatar{font-size:74px;line-height:1.1;margin:22px 0 8px;animation:float 3.5s ease-in-out infinite;user-select:none}
+.pet-avatar.egg{animation:twinkle 1.8s ease-in-out infinite}
+.pet-name{font-size:22px;font-weight:700;margin-bottom:4px}
+.pet-sub{font-size:15px;opacity:.85;margin-bottom:10px}
+.pet-prog-wrap{width:100%;height:18px;border:2.5px solid var(--ink);border-radius:999px;background:#FFF;overflow:hidden;margin-bottom:10px}
+.pet-prog-bar{height:100%;background:var(--green);transition:width .35s}
+.pet-speech{width:100%;min-height:56px;padding:8px 12px;border:2px solid var(--ink);border-radius:14px;background:#FFF;font-size:15px;line-height:1.4;margin-bottom:12px;display:flex;align-items:center;justify-content:center}
+.pet-acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
+.pet-act-btn{min-height:52px;padding:6px 4px;border:2.5px solid var(--ink);border-radius:14px;background:var(--card);box-shadow:2px 2px 0 var(--ink);font-size:15px;font-weight:700;line-height:1.2}
+.pet-act-btn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink)}
+.pet-act-btn small{display:block;font-size:12px;opacity:.75}
+.pet-street{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:12px}
+.street-item{padding:12px;border:var(--bd);border-radius:18px;background:var(--paper);box-shadow:3px 3px 0 var(--ink);display:flex;flex-direction:column;align-items:center;text-align:center}
+.street-item.egg-only{opacity:.7;background:#F5F2EB}
+.street-ic{font-size:48px;line-height:1.1;margin:6px 0}
+.street-who{font-size:16px;font-weight:700}
+.street-pet{font-size:15px;color:var(--navy);font-weight:700;margin-bottom:8px}
+.street-btns{display:flex;gap:6px;width:100%}
+.street-btns button{flex:1;min-height:40px;padding:4px;border:2px solid var(--ink);border-radius:10px;background:var(--yellow);font-size:13px;font-weight:700}
+.event-banner{margin-top:12px;padding:12px 14px;border:var(--bd);border-radius:16px;background:#FFF3C4;box-shadow:3px 3px 0 var(--ink);text-align:center;animation:pop .35s ease-out}
+.event-banner h4{font-size:19px;color:var(--red);margin-bottom:4px}
+.event-banner p{font-size:16px;line-height:1.45}
+
 /* 排行榜 */
 .rank-list{display:flex;flex-direction:column;gap:8px}
 .rank-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px solid var(--ink);border-radius:14px;background:var(--paper);font-size:19px}
@@ -518,6 +555,7 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
   <div class="fbar">
     <span class="sync"><i class="dot" id="dot"></i><span id="syncTxt">同步中…</span></span>
     <div class="fbar-acts">
+      <button class="tbtn" id="petBtn" style="background:var(--green);font-weight:700">🐾 寵物樂園</button>
       <button class="tbtn rank" id="rankBtn">🏆 班級積分榜</button>
       <button class="tbtn" id="fsBtn">⛶ 全螢幕</button>
     </div>
@@ -556,6 +594,26 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
     <div class="pick-stage" id="pickStage"></div>
     <div class="lotto-msg" id="pickMsg"></div>
     <div id="pickActions" class="row2" style="flex-wrap:wrap"></div>
+  </div>
+</div>
+
+<!-- ============ 🐾 班級電子寵物樂園視窗 ============ -->
+<div class="overlay" id="petOv" role="dialog" aria-modal="true" aria-labelledby="petTtl">
+  <div class="modal pet-modal">
+    <h2 id="petTtl">🐾 班級電子寵物樂園</h2>
+    <div class="pet-top-bar">
+      <select id="petActorSel" class="pet-sel" aria-label="選擇你的座號姓名"></select>
+      <span class="pet-pts-badge" id="petMyPts">⭐ 積分：0 分</span>
+    </div>
+    <div class="pet-nav">
+      <button type="button" class="pet-nav-btn on" data-pettab="my">🏡 我的寵物小屋</button>
+      <button type="button" class="pet-nav-btn" data-pettab="street">🏘️ 班級寵物街（串門子）</button>
+    </div>
+    <div id="petBody"></div>
+    <div id="petEventBox"></div>
+    <div class="row2">
+      <button type="button" class="btn plain grow" id="petClose">關閉</button>
+    </div>
   </div>
 </div>
 
@@ -676,20 +734,20 @@ async function fbGet(path){
 async function fbGetBoardData(date){
   const d = date || getTodayTaipei();
   const r = await Promise.all([
-    fbGet('students'), fbGet('notice'), fbGet('scores'), fbGet('pointLogs'), fbGet('carry'),
+    fbGet('students'), fbGet('notice'), fbGet('scores'), fbGet('pointLogs'), fbGet('carry'), fbGet('pets'),
     fbGet('sourceOverrides/' + d), fbGet('homework/' + d), fbGet('tempItems/' + d),
     fbGet('status/' + d), fbGet('lottery/' + d), fbGet('lotteryQuota/' + d)
   ]);
-  const srcOv = r[5], hwDate = r[6];
+  const srcOv = r[6], hwDate = r[7];
   const src = srcOv || stepSchool(d, -1);
   const hwSrc = (src === d) ? hwDate : await fbGet('homework/' + src);
   const raw = {
-    students: r[0], notice: r[1], scores: r[2], pointLogs: r[3], carry: r[4],
+    students: r[0], notice: r[1], scores: r[2], pointLogs: r[3], carry: r[4], pets: r[5],
     sourceOverrides: {}, homework: {}, tempItems: {}, status: {}, lottery: {}, lotteryQuota: {}
   };
   if (srcOv) raw.sourceOverrides[d] = srcOv;
   raw.homework[d] = hwDate; raw.homework[src] = hwSrc;
-  raw.tempItems[d] = r[7]; raw.status[d] = r[8]; raw.lottery[d] = r[9]; raw.lotteryQuota[d] = r[10];
+  raw.tempItems[d] = r[8]; raw.status[d] = r[9]; raw.lottery[d] = r[10]; raw.lotteryQuota[d] = r[11];
   return raw;
 }
 
@@ -832,6 +890,7 @@ function buildBoardFromDb(rawDb, targetDate){
     students, lines, items, status, carry,
     lotteryToday, lotteryUsedCount, lotteryExtraQuota,
     scoreTotal,
+    pets: (rawDb && rawDb.pets) || {},
     pointLogs: pointLogsArr.slice(0, 20)
   };
 }
@@ -980,6 +1039,230 @@ async function gs(fn){
       fbPut('pointLogs', null)
     ]);
     return { ok: true };
+  }
+
+  if (fn === 'petAction') {
+    const actorSeat = Number(args[0]);
+    const ownerSeat = Number(args[1]);
+    const slotIdx = Number(args[2]); // 0 或 1
+    const action = String(args[3]);  // 'adopt' | 'unlock2' | 'care_sun' | 'care_story' | 'care_warm' | 'feed' | 'pet' | 'play'
+    const stus = getStudentsList({ students: await fbGet('students') });
+    const actor = stus.find(s => s.seat === actorSeat);
+    const owner = stus.find(s => s.seat === ownerSeat);
+    if (!actor || !owner) throw new Error('找不到學生資料');
+
+    const curScore = Number(await fbGet('scores/' + actorSeat)) || 0;
+    const allPets = (await fbGet('pets')) || {};
+    const actorRec = allPets[actorSeat] || {};
+    const actorSlots = Array.isArray(actorRec.slots) ? actorRec.slots : (actorRec.slots ? Object.values(actorRec.slots) : []);
+    const actorHasHatched = actorSlots.some(p => p && p.stage === 'pet');
+
+    // 規則檢查
+    let cost = 0;
+    if (action === 'adopt') {
+      if (actorSeat !== ownerSeat) throw new Error('只能幫自己領養神祕蛋喔！');
+      if (actorSlots[0]) throw new Error('你已經領養過第一顆神祕蛋囉！');
+      if (curScore < 10) throw new Error('需要累積滿 10 顆星星（10 分）才能領取神祕蛋喔！');
+      cost = 10;
+    } else if (action === 'unlock2') {
+      if (actorSeat !== ownerSeat) throw new Error('只能開啟自己的第二隻寵物空間！');
+      if (!actorSlots[0] || actorSlots[0].stage !== 'pet') throw new Error('要先等第一隻小寵物破殼出生，才能購買第二隻空間喔！');
+      if (actorSlots[1]) throw new Error('你已經擁有第二隻小寵物啦！');
+      if (curScore < 25) throw new Error('開啟第二隻寵物空間需要 25 顆星星（25 分）喔！');
+      cost = 25;
+    } else {
+      // 照顧蛋或寵物：每次花費 1 分
+      if (actorSeat !== ownerSeat && !actorHasHatched) {
+        throw new Error('要等自己的小寵物破殼出生之後，才能去同學家串門子喔！');
+      }
+      cost = 1;
+      if (curScore < cost) throw new Error('星星積分不足 1 分，快去完成作業抽獎集點吧！');
+    }
+
+    // 盲盒生物池（10 種可愛生物）
+    const SPECIES_POOL = [
+      { id:'shiba',   name:'暖陽柴犬',   icon:'🐶', rarity:'常見', w:15 },
+      { id:'cat',     name:'橘貓團子',   icon:'🐱', rarity:'常見', w:15 },
+      { id:'rabbit',  name:'垂耳兔寶',   icon:'🐰', rarity:'常見', w:14 },
+      { id:'penguin', name:'圍巾企鵝',   icon:'🐧', rarity:'常見', w:14 },
+      { id:'hamster', name:'倉鼠球球',   icon:'🐹', rarity:'常見', w:12 },
+      { id:'fox',     name:'九尾小狐',   icon:'🦊', rarity:'稀有', w:10 },
+      { id:'owl',     name:'星星貓頭鷹', icon:'🦉', rarity:'稀有', w:8 },
+      { id:'turtle',  name:'寶石小海龜', icon:'🐢', rarity:'稀有', w:6 },
+      { id:'dragon',  name:'水晶小飛龍', icon:'🐉', rarity:'傳說', w:3 },
+      { id:'unicorn', name:'彩虹獨角獸', icon:'🦄', rarity:'傳說', w:3 }
+    ];
+    function rollSpecies(excludeId){
+      const pool = SPECIES_POOL.filter(x => x.id !== excludeId);
+      const sum = pool.reduce((a,b) => a + b.w, 0);
+      let r = Math.random() * sum;
+      for (const sp of pool) {
+        r -= sp.w;
+        if (r <= 0) return sp;
+      }
+      return pool[0];
+    }
+
+    let eventCard = null;
+    let speech = '';
+    let hatchedNow = null;
+
+    const tx = await fbTxn('pets/' + ownerSeat, cur => {
+      const rec = cur || { slots: [] };
+      const slots = Array.isArray(rec.slots) ? rec.slots.slice() : (rec.slots ? Object.values(rec.slots) : []);
+      const eggIcons = ['🥚', '🪺', '🔮', '🌟'];
+
+      if (action === 'adopt') {
+        if (slots[0]) return undefined;
+        slots[0] = {
+          stage: 'egg',
+          eggIcon: eggIcons[Math.floor(Math.random() * eggIcons.length)],
+          growth: 0,
+          maxGrowth: 5,
+          careCount: 0,
+          lastAction: '',
+          streak: 0,
+          memories: {},
+          lastSpeech: '一顆暖呼呼的神祕蛋誕生了！用星星照顧牠就會破殼喔～'
+        };
+        speech = slots[0].lastSpeech;
+        return { slots };
+      }
+
+      if (action === 'unlock2') {
+        if (slots[1]) return undefined;
+        slots[1] = {
+          stage: 'egg',
+          eggIcon: '✨🥚',
+          growth: 0,
+          maxGrowth: 5,
+          careCount: 0,
+          lastAction: '',
+          streak: 0,
+          memories: {},
+          lastSpeech: '第二顆閃亮神祕蛋登場！裡面會是哪一隻新夥伴呢？'
+        };
+        speech = slots[1].lastSpeech;
+        return { slots };
+      }
+
+      const pet = slots[slotIdx];
+      if (!pet) return undefined;
+      if (actorSeat !== ownerSeat && pet.stage !== 'pet') {
+        throw new Error('同學的蛋還在孵化中，等牠出生後再來串門子吧！');
+      }
+
+      pet.memories = pet.memories || {};
+      const m = pet.memories[actorSeat] || { name: actor.name, feed: 0, pet: 0, play: 0, total: 0 };
+
+      if (pet.stage === 'egg') {
+        pet.growth = Number(pet.growth || 0) + 1;
+        if (pet.growth >= (pet.maxGrowth || 5)) {
+          const firstId = (slotIdx === 1 && slots[0]) ? slots[0].speciesId : '';
+          const sp = rollSpecies(firstId);
+          pet.stage = 'pet';
+          pet.speciesId = sp.id;
+          pet.speciesName = sp.name;
+          pet.icon = sp.icon;
+          pet.rarity = sp.rarity;
+          pet.careCount = 1;
+          pet.lastAction = action;
+          pet.streak = 1;
+          hatchedNow = sp;
+          speech = '咔啦咔啦——「' + sp.name + ' ' + sp.icon + '」破殼出生啦！主人請多多指教！';
+        } else {
+          const left = (pet.maxGrowth || 5) - pet.growth;
+          speech = '蛋殼輕輕搖晃了一下！還差 ' + left + ' 點成長值就會破殼囉～';
+        }
+        pet.lastSpeech = speech;
+        slots[slotIdx] = pet;
+        return { slots };
+      }
+
+      // 已孵化小寵物的記憶與反應
+      const actKey = (action === 'feed' || action === 'pet' || action === 'play') ? action : 'pet';
+      const actNameMap = { feed: '餵食點心', pet: '溫柔摸頭', play: '開心陪玩' };
+      const prevAct = pet.lastAction || '';
+      const sameAct = (prevAct === actKey);
+      pet.streak = sameAct ? (Number(pet.streak || 0) + 1) : 1;
+      pet.lastAction = actKey;
+      pet.careCount = Number(pet.careCount || 0) + 1;
+
+      const prevCountOfThis = Number(m[actKey] || 0);
+      m[actKey] = prevCountOfThis + 1;
+      m.total = Number(m.total || 0) + 1;
+      m.name = actor.name;
+      pet.memories[actorSeat] = m;
+
+      if (actorSeat !== ownerSeat) {
+        // 同學友善串門子反應
+        if (m.total === 1) {
+          speech = '哇！是 ' + actorSeat + ' 號 ' + actor.name + ' 第一次來找我玩，還幫我' + actNameMap[actKey] + '，好開心！';
+        } else {
+          speech = actorSeat + ' 號 ' + actor.name + ' 又來串門子啦！你已經幫我照顧 ' + m.total + ' 次了，最喜歡你！';
+        }
+      } else {
+        // 主人互動記憶反應
+        if (pet.streak >= 3) {
+          speech = '主人～你連續 ' + pet.streak + ' 次都幫我「' + actNameMap[actKey] + '」了，我超喜歡這招，但下次也可以試試別的互動喔！';
+        } else if (!sameAct && prevAct) {
+          speech = '咦？主人今天換成「' + actNameMap[actKey] + '」了！每次都有新鮮感，幸福度大提升 ❤️';
+        } else if (prevCountOfThis >= 3) {
+          speech = '我就知道主人最擅長「' + actNameMap[actKey] + '」了（第 ' + m[actKey] + ' 次）！有你真好～';
+        } else {
+          speech = '謝謝主人的「' + actNameMap[actKey] + '」！我感覺自己又長大了一點點 ✨';
+        }
+      }
+
+      pet.lastSpeech = speech;
+      slots[slotIdx] = pet;
+      return { slots };
+    });
+
+    if (!tx.committed) throw new Error('操作未完成，請再試一次');
+
+    // 扣除花費積分
+    await fbPut('scores/' + actorSeat, SV_INC(-cost));
+
+    // 若非領蛋/開第二格，則有機率觸發「事件卡片」（45% 機率）
+    let bonusPts = 0;
+    let bonusDraw = false;
+    if (action !== 'adopt' && action !== 'unlock2' && Math.random() < 0.45) {
+      const EVENTS = [
+        { title:'🍀 幸運草奇遇卡', desc:'小寵物在草叢發現一顆閃亮星星，立刻送給你！', pts: 1, draw: false },
+        { title:'💎 尋寶大發現卡', desc:'小寵物挖到埋藏的寶石箱，直接回贈 +2 顆星星！', pts: 2, draw: false },
+        { title:'⭐ 幸運星祝福卡', desc:'小寵物向流星許願，送你「額外 1 次今日星星抽獎機會」！', pts: 0, draw: true },
+        { title:'💌 暖心感謝卡', desc:'小寵物把你的照顧記在心裡，偷偷塞給你 +1 顆星星當回禮！', pts: 1, draw: false },
+        { title:'🌈 彩虹好心情卡', desc:'全班氣氛超棒！小寵物開心轉圈圈，送你 +2 顆星星！', pts: 2, draw: false }
+      ];
+      eventCard = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+      if (eventCard.pts > 0) {
+        bonusPts = eventCard.pts;
+        await fbPut('scores/' + actorSeat, SV_INC(bonusPts));
+      }
+      if (eventCard.draw) {
+        bonusDraw = true;
+        await fbPut('lotteryQuota/' + getTodayTaipei() + '/' + actorSeat, SV_INC(1));
+      }
+    }
+
+    // 寫入加減分紀錄讓老師看得到
+    const netDelta = -cost + bonusPts;
+    const reasonTxt = action === 'adopt' ? '🥚 領養第一顆神祕蛋'
+      : action === 'unlock2' ? '🏡 開啟第二隻寵物空間'
+      : (actorSeat === ownerSeat ? '🐾 照顧自己的小寵物' : '🤝 串門子照顧 ' + ownerSeat + '號寵物') + (bonusPts ? '（觸發事件回禮 +' + bonusPts + '）' : '');
+    await fbTxn('pointLogs', old => [{ seat: actorSeat, name: actor.name, delta: netDelta, reason: reasonTxt, ts: Date.now() }].concat(Array.isArray(old) ? old.filter(Boolean) : []).slice(0, 30));
+
+    const newScore = Number(await fbGet('scores/' + actorSeat)) || 0;
+    return {
+      ok: true,
+      newScore,
+      slots: tx.value.slots,
+      speech,
+      hatchedNow,
+      eventCard,
+      bonusDraw
+    };
   }
 
   if (fn === 'saveStudents') {
@@ -1702,6 +1985,215 @@ $('#lottoGame').addEventListener('click', async ev=>{
   }
 });
 
+
+
+/* =====================================================
+ * 🐾 班級電子寵物樂園（盲盒領蛋 / 記憶反應 / 友善串門子 / 事件卡）
+ * ===================================================== */
+const PetUI = {
+  actorSeat: null,
+  tab: 'my', // 'my' | 'street'
+  busy: false
+};
+
+function getPetSlots(seat){
+  const petsMap = (S.board && S.board.pets) || {};
+  const rec = petsMap[seat] || {};
+  if (Array.isArray(rec.slots)) return rec.slots.filter(Boolean);
+  if (rec.slots && typeof rec.slots === 'object') return Object.values(rec.slots).filter(Boolean);
+  return [];
+}
+
+function openPetPark(){
+  const b = S.board;
+  if (!b || !b.students || !b.students.length) {
+    toast('尚未設定班級名單');
+    return;
+  }
+  if (!PetUI.actorSeat || !b.students.some(s => s.seat === PetUI.actorSeat)) {
+    PetUI.actorSeat = b.students[0].seat;
+  }
+  $('#petActorSel').innerHTML = b.students.map(s =>
+    '<option value="'+s.seat+'"'+(s.seat===PetUI.actorSeat?' selected':'')+'>我是：'+s.seat+' 號 '+esc(s.name)+'</option>'
+  ).join('');
+  $('#petEventBox').innerHTML = '';
+  renderPetPark();
+  $('#petOv').classList.add('show');
+}
+
+function renderPetPark(){
+  const b = S.board; if (!b) return;
+  const actor = PetUI.actorSeat;
+  const myPts = (b.scoreTotal && Number(b.scoreTotal[actor])) || 0;
+  $('#petMyPts').textContent = '⭐ 擁有星星：' + myPts + ' 分';
+
+  document.querySelectorAll('.pet-nav-btn').forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.pettab === PetUI.tab);
+  });
+
+  const body = $('#petBody');
+  const mySlots = getPetSlots(actor);
+  const myHasHatched = mySlots.some(p => p && p.stage === 'pet');
+
+  if (PetUI.tab === 'my') {
+    let h = '<div class="pet-slots">';
+    // 第一格寵物
+    h += renderSlotCard(actor, 0, mySlots[0], myPts, true);
+    // 第二格寵物（需第一隻出生後花 25 顆星星解鎖）
+    h += renderSlotCard(actor, 1, mySlots[1], myPts, myHasHatched);
+    h += '</div>';
+    body.innerHTML = h;
+  } else {
+    // 班級寵物街（串門子）
+    let h = '';
+    if (!myHasHatched) {
+      h += '<div class="note" style="background:#FFF3C4;padding:10px 14px;border-radius:14px;border:2px solid var(--ink)">🥚 <b>串門子小提醒：</b>要等<b>你自己的第一隻小寵物破殼出生</b>之後，才可以去同學家串門子、做友好互動喔！</div>';
+    } else {
+      h += '<div class="note">點選同學已出生的小寵物，花 <b>1 顆星星</b>做友好互動（餵食／摸頭／陪玩），小寵物會記住你的名字，還有機會送你事件卡片回禮！</div>';
+    }
+    h += '<div class="pet-street">';
+    b.students.forEach(s => {
+      if (s.seat === actor) return;
+      const slots = getPetSlots(s.seat);
+      const p = slots[0];
+      if (!p) {
+        h += '<div class="street-item egg-only"><div class="street-who">'+s.seat+' 號 '+esc(s.name)+'</div><div class="street-ic">🏠</div><div class="street-pet">尚未領養神祕蛋</div></div>';
+      } else if (p.stage === 'egg') {
+        h += '<div class="street-item egg-only"><div class="street-who">'+s.seat+' 號 '+esc(s.name)+'</div><div class="street-ic">'+(p.eggIcon||'🥚')+'</div><div class="street-pet">神祕蛋孵化中 ('+(p.growth||0)+'/5)</div></div>';
+      } else {
+        const mem = (p.memories && p.memories[actor]) ? p.memories[actor].total : 0;
+        const dis = (!myHasHatched || myPts < 1) ? ' disabled' : '';
+        h += '<div class="street-item">'+
+          '<div class="street-who">'+s.seat+' 號 '+esc(s.name)+'</div>'+
+          '<div class="street-ic">'+p.icon+'</div>'+
+          '<div class="street-pet">'+esc(p.speciesName)+(mem?' · 友好度 '+mem:'')+'</div>'+
+          '<div class="street-btns">'+
+            '<button type="button" data-pact="feed" data-owner="'+s.seat+'" data-slot="0"'+dis+'>🍎 餵食</button>'+
+            '<button type="button" data-pact="pet" data-owner="'+s.seat+'" data-slot="0"'+dis+'>✋ 摸頭</button>'+
+            '<button type="button" data-pact="play" data-owner="'+s.seat+'" data-slot="0"'+dis+'>⚽ 陪玩</button>'+
+          '</div></div>';
+      }
+    });
+    h += '</div>';
+    body.innerHTML = h;
+  }
+}
+
+function renderSlotCard(ownerSeat, slotIdx, pet, myPts, canUnlock){
+  if (!pet) {
+    if (slotIdx === 0) {
+      const ok = myPts >= 10;
+      return '<div class="pet-card locked">'+
+        '<div style="font-size:64px;margin-bottom:8px">🎁🥚</div>'+
+        '<div class="pet-name">第一顆盲盒神祕蛋</div>'+
+        '<div class="pet-sub">累積滿 <b>10 顆星星</b> 即可領養專屬蛋，孵化出隨機可愛生物！</div>'+
+        '<button type="button" class="btn green" data-pact="adopt" data-owner="'+ownerSeat+'" data-slot="0"'+(ok?'':' disabled')+'>'+
+        (ok ? '✨ 花 10 顆星星領養蛋' : '還差 '+(10-myPts)+' 顆星星')+'</button></div>';
+    } else {
+      const ok = canUnlock && myPts >= 25;
+      return '<div class="pet-card locked">'+
+        '<div style="font-size:58px;margin-bottom:8px">🏡🔒</div>'+
+        '<div class="pet-name">第二隻寵物擴充空間</div>'+
+        '<div class="pet-sub">'+(canUnlock ? '花費 <b>25 顆星星</b> 購買第二隻寵物空間，領養第二顆盲盒蛋！' : '需先讓第一隻小寵物破殼出生後才能開啟')+'</div>'+
+        '<button type="button" class="btn sky" data-pact="unlock2" data-owner="'+ownerSeat+'" data-slot="1"'+(ok?'':' disabled')+'>'+
+        (!canUnlock ? '尚未解鎖' : (ok ? '🏡 花 25 顆星星購買空間' : '還差 '+(25-myPts)+' 顆星星'))+'</button></div>';
+    }
+  }
+
+  if (pet.stage === 'egg') {
+    const g = Number(pet.growth || 0);
+    const maxG = Number(pet.maxGrowth || 5);
+    const pct = Math.min(100, Math.round((g / maxG) * 100));
+    const dis = myPts < 1 ? ' disabled' : '';
+    return '<div class="pet-card">'+
+      '<span class="pet-stage-tag">第 '+(slotIdx+1)+' 格 · 孵化中</span>'+
+      '<div class="pet-avatar egg">'+(pet.eggIcon||'🥚')+'</div>'+
+      '<div class="pet-name">盲盒神祕蛋（'+g+' / '+maxG+'）</div>'+
+      '<div class="pet-prog-wrap"><div class="pet-prog-bar" style="width:'+pct+'%"></div></div>'+
+      '<div class="pet-speech">'+esc(pet.lastSpeech || '用星星照顧我，我就會破殼出生喔！')+'</div>'+
+      '<div class="pet-acts">'+
+        '<button type="button" class="pet-act-btn" data-pact="care_sun" data-owner="'+ownerSeat+'" data-slot="'+slotIdx+'"'+dis+'>☀️ 曬太陽<small>-1 ⭐</small></button>'+
+        '<button type="button" class="pet-act-btn" data-pact="care_story" data-owner="'+ownerSeat+'" data-slot="'+slotIdx+'"'+dis+'>📖 說故事<small>-1 ⭐</small></button>'+
+        '<button type="button" class="pet-act-btn" data-pact="care_warm" data-owner="'+ownerSeat+'" data-slot="'+slotIdx+'"'+dis+'>🧣 蓋被被<small>-1 ⭐</small></button>'+
+      '</div></div>';
+  }
+
+  // 已出生小寵物
+  const cares = Number(pet.careCount || 1);
+  const lv = cares >= 20 ? '👑 華麗完全體' : (cares >= 8 ? '🌟 活潑成長期' : '🌱 可愛幼年期');
+  const dis = myPts < 1 ? ' disabled' : '';
+  return '<div class="pet-card">'+
+    '<span class="pet-stage-tag">'+lv+'</span>'+
+    '<span class="pet-rarity">'+(pet.rarity||'可愛')+'</span>'+
+    '<div class="pet-avatar">'+pet.icon+'</div>'+
+    '<div class="pet-name">'+esc(pet.speciesName)+' <small style="font-size:14px;opacity:.75">(照顧 '+cares+' 次)</small></div>'+
+    '<div class="pet-speech">'+esc(pet.lastSpeech || '主人好！今天想跟我怎麼玩呢？')+'</div>'+
+    '<div class="pet-acts">'+
+      '<button type="button" class="pet-act-btn" data-pact="feed" data-owner="'+ownerSeat+'" data-slot="'+slotIdx+'"'+dis+'>🍎 餵食<small>-1 ⭐</small></button>'+
+      '<button type="button" class="pet-act-btn" data-pact="pet" data-owner="'+ownerSeat+'" data-slot="'+slotIdx+'"'+dis+'>✋ 摸頭<small>-1 ⭐</small></button>'+
+      '<button type="button" class="pet-act-btn" data-pact="play" data-owner="'+ownerSeat+'" data-slot="'+slotIdx+'"'+dis+'>⚽ 陪玩<small>-1 ⭐</small></button>'+
+    '</div></div>';
+}
+
+$('#petBtn').addEventListener('click', openPetPark);
+$('#petClose').addEventListener('click', ()=>{ if (!PetUI.busy) $('#petOv').classList.remove('show'); });
+$('#petActorSel').addEventListener('change', ev=>{
+  PetUI.actorSeat = Number(ev.target.value);
+  $('#petEventBox').innerHTML = '';
+  renderPetPark();
+});
+document.querySelectorAll('.pet-nav-btn').forEach(btn => {
+  btn.addEventListener('click', ()=>{
+    if (PetUI.busy) return;
+    PetUI.tab = btn.dataset.pettab;
+    $('#petEventBox').innerHTML = '';
+    renderPetPark();
+  });
+});
+
+$('#petBody').addEventListener('click', async ev=>{
+  const btn = ev.target.closest('[data-pact]');
+  if (!btn || PetUI.busy) return;
+  const act = btn.dataset.pact;
+  const ownerSeat = Number(btn.dataset.owner);
+  const slotIdx = Number(btn.dataset.slot);
+  const actorSeat = PetUI.actorSeat;
+
+  PetUI.busy = true;
+  btn.disabled = true;
+  $('#petEventBox').innerHTML = '';
+
+  try {
+    const res = await gs('petAction', actorSeat, ownerSeat, slotIdx, act);
+    if (res && res.ok) {
+      if (!S.board.scoreTotal) S.board.scoreTotal = {};
+      if (!S.board.pets) S.board.pets = {};
+      S.board.scoreTotal[actorSeat] = res.newScore;
+      S.board.pets[ownerSeat] = { slots: res.slots };
+      if (res.bonusDraw) {
+        if (!S.board.lotteryExtraQuota) S.board.lotteryExtraQuota = {};
+        S.board.lotteryExtraQuota[actorSeat] = Number(S.board.lotteryExtraQuota[actorSeat] || 0) + 1;
+        renderLeft();
+      }
+      S.writeSeq++; S.lastJson = '';
+      saveLocalSnap(JSON.stringify(S.board));
+      renderPetPark();
+
+      let bannerHtml = '';
+      if (res.hatchedNow) {
+        bannerHtml += '<div class="event-banner"><h4>🎉 恭喜盲盒孵化成功！</h4><p>誕生了【<b>'+res.hatchedNow.rarity+'</b>】<b>'+res.hatchedNow.icon+' '+esc(res.hatchedNow.name)+'</b>！現在可以去「班級寵物街」串門子囉！</p></div>';
+      }
+      if (res.eventCard) {
+        bannerHtml += '<div class="event-banner"><h4>🃏 觸發事件卡片：'+esc(res.eventCard.title)+'</h4><p>'+esc(res.eventCard.desc)+'</p></div>';
+      }
+      $('#petEventBox').innerHTML = bannerHtml;
+    }
+  } catch(e) {
+    handleErr(e);
+    renderPetPark();
+  }
+  PetUI.busy = false;
+});
 
 /* =====================================================
  * 連點右下角天空插圖兩下 -> 全班隨機抽籤點名活動（樂透滾球 / 抽籤 / 翻牌）
