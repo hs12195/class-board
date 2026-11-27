@@ -6,7 +6,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="教室聯絡簿">
-<script>try{var _t=localStorage.getItem("CLASS_BOARD_THEME");if(_t)document.documentElement.setAttribute("data-theme",_t)}catch(e){}</script>
 <title>教室聯絡簿</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -463,7 +462,7 @@ body.admin-open{overflow:hidden}
 .ad-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:6px 0}
 .ad-head h2{display:flex;align-items:center;gap:10px;font-size:28px;margin-right:auto}
 .ad-head h2 svg{width:44px;height:44px}
-.tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:8px 0;background:var(--paper)}
+.tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px 0;background:var(--paper)}
 .tab{min-height:60px;padding:6px;border:var(--bd);border-radius:16px;background:var(--card);font-size:17px;line-height:1.2}
 .tab.on{background:var(--yellow);box-shadow:3px 3px 0 var(--ink)}
 .tab small{display:block;font-size:12px;opacity:.75}
@@ -513,40 +512,26 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
 }
 
 
-/* ---------- 後台：版面外觀卡片 ---------- */
-.themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
-.themecard{padding:12px;border:var(--bd);border-radius:18px;background:var(--card);box-shadow:3px 3px 0 var(--ink);text-align:left}
-.themecard.on{background:#FFF3C4;border-color:var(--navy)}
-.themecard:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
-/* ===== 版面主題（後台 #admin 與彈窗 .modal 固定使用預設色票，只換前台大螢幕） ===== */
-[data-theme="chalk"]{
-  --paper:#4B3526; --card:#2F4B3F; --ink:#F3F0E6; --inkrgb:243,240,230;
-  --coral:#A9564D; --yellow:#8C7B2F; --sky:#3F6F7D; --green:#4A7352;
-  --red:#E0685D; --navy:#FFFFFF; --tickgreen:#9BE07A;
-  --th:#3B5C4D; --odd:#35544A; --notice:#5A3F39; --hl:#6E6530;
-  --bd:2px solid rgba(243,240,230,.7); --r:8px; --shadow:0 4px 0 rgba(0,0,0,.35);
-}
-[data-theme="chalk"] #front{text-shadow:0 0 1px rgba(255,255,255,.3)}
-[data-theme="chalk"] .panel{border:7px solid #A87B52;border-radius:8px;background:radial-gradient(ellipse at 30% 20%,#3A5B4D,#2A4338);box-shadow:inset 0 0 0 2px rgba(0,0,0,.25),inset 0 0 60px rgba(0,0,0,.3),0 5px 0 rgba(0,0,0,.4)}
-[data-theme="chalk"] .nm{background:transparent}
-[data-theme="chalk"] .nm.odd{background:var(--odd)}
-[data-theme="chalk"] .navbtn,[data-theme="chalk"] .tbtn,[data-theme="chalk"] .ctag{box-shadow:2px 2px 0 rgba(0,0,0,.45)}
-[data-theme="chalk"] .cg{background:rgba(0,0,0,.18)}
-[data-theme="muji"]{
-  --paper:#F6F4EF; --card:#FFFFFF; --ink:#3B3A37; --inkrgb:59,58,55;
-  --coral:#E3CBC3; --yellow:#E8DEC8; --sky:#D7DFE2; --green:#DCE2D2;
-  --red:#B5524A; --navy:#3E5560; --tickgreen:#7E9C6E;
-  --th:#EFEBE2; --odd:#FAF8F3; --notice:#F4ECE6; --hl:#EFE5CC;
-  --bd:1px solid #CFCABF; --r:6px; --shadow:none;
-  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Huninn',sans-serif;
-}
-[data-theme="muji"] #front *{box-shadow:none}
-[data-theme="muji"] #front :is(.tbtn,.chip,.cg,.star-done,.ctag,.navbtn,.tmp,.notice-bar .ntag){border-width:1px}
-[data-theme="muji"] #front :is(.badge,.nm .no){border-width:1.5px}
-[data-theme="muji"] #front :is(.th,.dt,h1){font-weight:500}
-[data-theme="muji"] .sky-icons{display:none}
-[data-theme="muji"] :is(.hicon,.deco,.empty svg){filter:grayscale(.85);opacity:.8}
-[data-theme="muji"] .vbox li{border-left-style:solid;border-left-width:1px}
+
+/* ---------- 🏡 寵物空間（依寵物種類的棲地背景） ---------- */
+.pet-room{position:relative;width:100%;height:232px;margin:30px 0 10px;border:var(--bd);border-radius:16px;overflow:hidden;background:#EBF6FC}
+.pet-room .room-svg,.street-room .room-svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.room-tag{position:absolute;top:8px;left:8px;z-index:4;padding:1px 9px;border:2px solid var(--ink);border-radius:999px;background:rgba(255,254,250,.92);font-size:12px;font-weight:700}
+.pet-room .pet-avatar-wrap{position:absolute;left:50%;bottom:44px;transform:translateX(-50%);margin:0;z-index:2}
+.room-items{position:absolute;left:6px;right:6px;bottom:6px;z-index:4;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.room-item{display:inline-flex;align-items:center;gap:3px;min-height:34px;padding:0 8px;border:2px solid var(--ink);border-radius:10px;background:rgba(255,254,250,.9);font-size:22px;line-height:1}
+.room-item.on{background:var(--yellow)}
+.room-item small{font-size:11px;font-weight:700}
+.room-hint{padding:1px 8px;border-radius:999px;background:rgba(255,254,250,.88);font-size:11px;opacity:.85}
+.room-snacks{position:absolute;right:8px;top:8px;z-index:4;display:flex;gap:4px}
+.room-snack{padding:0 8px;border:2px solid var(--ink);border-radius:999px;background:rgba(255,254,250,.92);font-size:14px;font-weight:700}
+.wings-svg{display:block;width:100%;height:auto}
+.wings-svg.wings-shop{width:74px;margin:6px auto}
+.acc-inl{display:inline-block;width:1.7em;height:.9em;vertical-align:-.1em}
+.pet-avatar-wrap .pet-acc-wear.pos-back{left:50%;right:auto;transform:translateX(-50%);top:4px;width:175%;font-size:0}
+.street-room{position:relative;width:100%;height:92px;border:2px solid var(--ink);border-radius:12px;overflow:hidden;margin:6px 0}
+.street-av{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);font-size:46px;line-height:1.1;z-index:2}
+.street-acc-wear.pos-back{left:50%;right:auto;transform:translateX(-50%);top:2px;width:190%;font-size:0;z-index:-1}
 </style>
 </head>
 <body>
@@ -790,6 +775,7 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
     <header class="ad-head">
       <h2><svg aria-hidden="true"><use href="#i-board"/></svg>老師後台</h2>
       <button class="btn" id="adSandbox" style="background:#FFE066">🧪 模擬學生測試</button>
+      <button class="btn" id="adExport" style="background:#FFE066">💾 匯出備份</button>
       <button class="btn sky" id="adSync">手動立即同步</button>
       <button class="btn plain" id="adBack">返回前台</button>
     </header>
@@ -799,7 +785,6 @@ textarea.in{min-height:220px;line-height:1.6;resize:vertical}
       <button class="tab" data-tab="track">欠交追蹤<small>跨日未結案</small></button>
       <button class="tab" data-tab="points">獎勵與積分<small>再抽獎與加減分</small></button>
       <button class="tab" data-tab="roster">班級名單<small>設定座號與姓名</small></button>
-      <button class="tab" data-tab="theme">版面外觀<small>黑板・無印・手繪</small></button>
     </nav>
     <div id="adBody"></div>
   </div>
@@ -822,14 +807,7 @@ const WD = ['日','一','二','三','四','五','六'];
 const LABEL = { unsubmitted:'未交', done:'已完成', correction:'待訂正', corrected:'訂正完成' };
 const NEXT  = { '':'done', done:'unsubmitted', unsubmitted:'correction', correction:'corrected', corrected:'' };
 const POLL_MS = 12000;
-const THEME_IDS = ['doodle', 'chalk', 'muji'];
-const LS_THEME_KEY = 'CLASS_BOARD_THEME';
-function applyTheme(t){
-  if (THEME_IDS.indexOf(t) < 0) t = 'doodle';
-  const root = document.documentElement;
-  if (root.getAttribute('data-theme') !== t) { root.setAttribute('data-theme', t); setTimeout(fitVertical, 80); }
-  try { localStorage.setItem(LS_THEME_KEY, t); } catch(e){}
-}
+
 /* 台灣時區今日 YYYY-MM-DD */
 function getTodayTaipei(){
   const now = new Date();
@@ -916,6 +894,14 @@ function sbSync(){
   S.lastJson = '';
 }
 
+/* 原子扣星星：餘額不足就不扣（避免連點超支、負分） */
+async function spendStars(seat, cost){
+  const tx = await fbTxn('scores/' + seat, cur => { const n = Number(cur) || 0; return n >= cost ? n - cost : undefined; });
+  if (!tx.committed) throw new Error('星星積分不足 ' + cost + ' 分，快去完成作業抽獎集點吧！');
+}
+async function refundStars(seat, cost){ try { await fbPut('scores/' + seat, SV_INC(cost)); } catch(e){} }
+const PET_DAILY_CAP = 6;   // 每人每天寵物回禮上限（星星=1 單位、抽獎券=2 單位）
+
 async function fbGetAll(){
   const res = await fetch(dbBaseUrl() + '/boardData.json');
   if (!res.ok) throw new Error('Firebase 連線失敗 (HTTP ' + res.status + ')');
@@ -956,15 +942,15 @@ async function fbGet(path){
 async function fbGetBoardData(date){
   const d = date || getTodayTaipei();
   const r = await Promise.all([
-    fbGet('students'), fbGet('notice'), fbGet('scores'), fbGet('pointLogs'), fbGet('carry'), fbGet('pets'),
+    fbGet('students'), fbGet('notice'), fbGet('scores'), fbGet('pointLogs'), fbGet('carry'), null,
     fbGet('sourceOverrides/' + d), fbGet('homework/' + d), fbGet('tempItems/' + d),
-    fbGet('status/' + d), fbGet('lottery/' + d), fbGet('lotteryQuota/' + d), fbGet('theme')
+    fbGet('status/' + d), fbGet('lottery/' + d), fbGet('lotteryQuota/' + d)
   ]);
   const srcOv = r[6], hwDate = r[7];
   const src = srcOv || stepSchool(d, -1);
   const hwSrc = (src === d) ? hwDate : await fbGet('homework/' + src);
   const raw = {
-    theme: r[12], students: r[0], notice: r[1], scores: r[2], pointLogs: r[3], carry: r[4], pets: r[5],
+    students: r[0], notice: r[1], scores: r[2], pointLogs: r[3], carry: r[4], pets: r[5],
     sourceOverrides: {}, homework: {}, tempItems: {}, status: {}, lottery: {}, lotteryQuota: {}
   };
   if (srcOv) raw.sourceOverrides[d] = srcOv;
@@ -1115,7 +1101,6 @@ function buildBoardFromDb(rawDb, targetDate){
   return {
     today, date, weekday, source, srcAuto, srcOverride,
     notice: String((rawDb && rawDb.notice) || ''),
-    theme: String((rawDb && rawDb.theme) || 'doodle'),
     students, lines, items, status, carry,
     lotteryToday, lotteryUsedCount, lotteryExtraQuota,
     scoreTotal,
@@ -1191,6 +1176,7 @@ async function gsCore(fn){
         throw new Error('星星積分不足 ' + item.cost + ' 分，快去集點吧！');
       }
 
+      await spendStars(actorSeat, item.cost);
       const txShop = await fbTxn('pets/' + ownerSeat, cur => {
         const rec = cur || { slots: [] };
         const slots = Array.isArray(rec.slots) ? rec.slots.slice() : (rec.slots ? Object.values(rec.slots) : []);
@@ -1202,18 +1188,19 @@ async function gsCore(fn){
           owned.push(item.icon);
           p.accessories = owned;
           p.equippedAcc = item.icon;
-          p.lastSpeech = '哇～謝謝主人送我「' + item.name + ' ' + item.icon + '」！戴在身上是不是超帥氣？';
+          p.lastSpeech = '哇～謝謝主人送我「' + item.name + (item.icon === '🪽' ? '' : ' ' + item.icon) + '」！戴在身上是不是超帥氣？';
         } else {
           const addCare = item.id === 'snack_cake' ? 3 : 2;
           p.careCount = Number(p.careCount || 1) + addCare;
-          p.lastSpeech = '嗚哇！是高級的「' + item.name + ' ' + item.icon + '」！幸福爆表，互動度 +' + addCare + '！';
+          p.snacks = p.snacks || {};
+          p.snacks[item.id] = Number(p.snacks[item.id] || 0) + 1;
+          p.lastSpeech = '嗚哇！是高級的「' + item.name + (item.icon === '🪽' ? '' : ' ' + item.icon) + '」！幸福爆表，互動度 +' + addCare + '！';
         }
         slots[slotIdx] = p;
         return { slots };
-      });
-      if (!txShop.committed) throw new Error('購買未完成，請再試一次');
+      }).catch(async e => { await refundStars(actorSeat, item.cost); throw e; });
+      if (!txShop.committed) { await refundStars(actorSeat, item.cost); throw new Error('購買未完成，請再試一次'); }
 
-      await fbPut('scores/' + actorSeat, SV_INC(-item.cost));
       await fbTxn('pointLogs', old => [{
         seat: actorSeat, name: actor.name, delta: -item.cost,
         reason: '🎒 購買寵物' + (item.type === 'acc' ? '配件：' : '點心：') + item.name,
@@ -1290,6 +1277,7 @@ async function gsCore(fn){
     let evolvedNow = null;
     let isAdvancedPet = false;
 
+    await spendStars(actorSeat, cost);
     const tx = await fbTxn('pets/' + ownerSeat, cur => {
       const rec = cur || { slots: [] };
       const slots = Array.isArray(rec.slots) ? rec.slots.slice() : (rec.slots ? Object.values(rec.slots) : []);
@@ -1410,15 +1398,14 @@ async function gsCore(fn){
       pet.lastSpeech = speech;
       slots[slotIdx] = pet;
       return { slots };
-    });
+    }).catch(async e => { await refundStars(actorSeat, cost); throw e; });
 
-    if (!tx.committed) throw new Error('操作未完成，請再試一次');
-
-    await fbPut('scores/' + actorSeat, SV_INC(-cost));
+    if (!tx.committed) { await refundStars(actorSeat, cost); throw new Error('操作未完成，請再試一次'); }
 
     // 觸發「寵物尋寶／幸運回禮」（進階覺醒期或使用才藝秀時機率高達 65%，一般為 50%）
-    const eventChance = (isAdvancedPet || action === 'trick') ? 0.65 : 0.50;
+    const eventChance = (isAdvancedPet || action === 'trick') ? 0.35 : 0.30;   // 期望回禮約 0.6～0.7 顆 < 成本 1 顆
     let bonusPts = 0;
+    let rewardCapped = false;
     let bonusDraw = false;
     if (action !== 'adopt' && action !== 'unlock2' && Math.random() < eventChance) {
       const EVENTS = [
@@ -1428,11 +1415,16 @@ async function gsCore(fn){
         { title:'🎁 寵物送你幸運抽獎券！', desc:'小寵物向流星許願，幫你爭取到「額外 1 次 +1～+3 分抽獎機會」！', pts: 0, draw: true }
       ];
       eventCard = EVENTS[Math.floor(Math.random() * EVENTS.length)];
-      if (eventCard.pts > 0) {
+      {
+        const units = eventCard.draw ? 2 : eventCard.pts;
+        const capTx = await fbTxn('petReward/' + getTodayTaipei() + '/' + actorSeat, c => { const n = Number(c) || 0; return (n + units <= PET_DAILY_CAP) ? n + units : undefined; });
+        if (!capTx.committed) { eventCard = null; rewardCapped = true; }
+      }
+      if (eventCard && eventCard.pts > 0) {
         bonusPts = eventCard.pts;
         await fbPut('scores/' + actorSeat, SV_INC(bonusPts));
       }
-      if (eventCard.draw) {
+      if (eventCard && eventCard.draw) {
         bonusDraw = true;
         await fbPut('lotteryQuota/' + getTodayTaipei() + '/' + actorSeat, SV_INC(1));
       }
@@ -1453,7 +1445,8 @@ async function gsCore(fn){
       hatchedNow,
       evolvedNow,
       eventCard,
-      bonusDraw
+      bonusDraw,
+      rewardCapped
     };
   }
 
@@ -1539,24 +1532,16 @@ async function gsCore(fn){
     const stus = getStudentsList({ students: await fbGet('students') });
     const patches = {}, newLogs = [];
     seats.forEach(seat => {
-      patches[seat] = SV_INC(delta);
       const stu = stus.find(x => x.seat === seat);
       newLogs.push({ seat: Number(seat), name: stu ? stu.name : '', delta, reason, ts: Date.now() });
     });
-    await fbPatch('scores', patches);
+    await Promise.all(seats.map(seat => fbTxn('scores/' + seat, cur => Math.max(0, (Number(cur) || 0) + delta))));
     await fbTxn('pointLogs', old => newLogs.concat(Array.isArray(old) ? old.filter(Boolean) : []).slice(0, 30));
     return { ok: true };
   }
 
   if (fn === 'resetAllScores') {
     await Promise.all([fbPut('scores', null), fbPut('lottery', null), fbPut('lotteryQuota', null), fbPut('pointLogs', null)]);
-    return { ok: true };
-  }
-
-  if (fn === 'saveTheme') {
-    const t = String(args[0] || 'doodle');
-    if (THEME_IDS.indexOf(t) < 0) throw new Error('未知的版面模式');
-    await fbPut('theme', t);
     return { ok: true };
   }
 
@@ -1729,7 +1714,6 @@ function fitVertical(){
 window.addEventListener('resize', ()=>{ fitVertical(); });
 
 function renderAll(){
-  if (S.board && S.board.theme && !S.sandbox) applyTheme(S.board.theme);
   renderDate(); renderLeft(); renderRight();
   if (S.adminOpen) adminRefresh();
 }
@@ -1763,6 +1747,7 @@ async function fetchBoard(force){
   try {
     const b = await gs('getBoard', S.viewDate);
     if (w !== S.writeSeq || S.pending > 0 || S.batchTimer) return;
+    if (S.board && S.board.pets) b.pets = S.board.pets;   // 寵物資料只在寵物樂園開啟時更新
     const j = JSON.stringify(b);
     S.online = true;
     $('#dot').classList.remove('off');
@@ -2304,6 +2289,116 @@ function getAccPosClass(icon){
   return 'pos-head';
 }
 
+/* 🪽 Unicode 15 的小翅膀在很多裝置顯示成空白方框，改用內建 SVG 繪製（資料仍沿用 🪽 當作代號，舊資料不受影響） */
+function wingsSvg(cls){
+  const w = '<path d="M72 44 C60 10 24 2 4 16 C16 22 14 32 9 36 C22 38 22 48 17 54 C36 58 56 54 72 48 Z" fill="#FFFCF6"/>' +
+            '<path d="M72 44 C56 28 34 22 14 24 M72 47 C54 38 34 36 20 40" fill="none"/>';
+  return '<svg class="' + cls + '" viewBox="0 0 200 70" aria-hidden="true"><g stroke="#3E3A39" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">' +
+         '<g>' + w + '</g><g transform="translate(200,0) scale(-1,1)">' + w + '</g></g></svg>';
+}
+function accIc(icon, mode){
+  if (icon === '🪽') return wingsSvg(mode === 'wear' ? 'wings-svg' : (mode === 'shop' ? 'wings-svg wings-shop' : 'acc-inl'));
+  return icon;
+}
+
+/* 🏡 寵物空間：依寵物種類對應棲地與背景小屋 */
+const SC = 'stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"';
+function scn(inner){ return '<svg class="room-svg" viewBox="0 0 300 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' + inner + '</svg>'; }
+function winGrid(x, y, cols, rows, fill){
+  let o = '';
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) o += '<rect x="' + (x + c * 16) + '" y="' + (y + r * 20) + '" width="9" height="12" fill="' + fill + '"/>';
+  return o;
+}
+const HABITATS = {
+  meadow: { label: '🌿 草原・暖陽小狗屋', svg: scn(
+    '<rect width="300" height="190" fill="#BFE3F5"/><circle cx="48" cy="36" r="18" fill="#F6D27A" ' + SC + '/>' +
+    '<ellipse cx="170" cy="34" rx="30" ry="11" fill="#fff"/><ellipse cx="190" cy="27" rx="20" ry="10" fill="#fff"/>' +
+    '<path d="M0 118 Q70 84 150 116 T300 100 V190 H0Z" fill="#B9DAA5" ' + SC + '/><rect y="150" width="300" height="40" fill="#9CCB84"/>' +
+    '<rect x="214" y="104" width="62" height="48" fill="#F2A497" ' + SC + '/><polygon points="206,106 245,72 284,106" fill="#D9453D" ' + SC + '/><path d="M235 152V132a10 10 0 0 1 20 0V152Z" fill="#3E3A39"/>' +
+    '<circle cx="40" cy="160" r="5" fill="#F2A497"/><circle cx="70" cy="172" r="5" fill="#F6D27A"/><circle cx="120" cy="165" r="5" fill="#fff"/>') },
+  city: { label: '🏙️ 都市・屋頂小閣樓', svg: scn(
+    '<rect width="300" height="190" fill="#CFE8F5"/><circle cx="256" cy="30" r="15" fill="#F6D27A" ' + SC + '/>' +
+    '<rect x="14" y="62" width="62" height="110" fill="#A8D3E6" ' + SC + '/>' + winGrid(26, 76, 3, 4, '#FFFCF6') +
+    '<rect x="86" y="38" width="54" height="134" fill="#F6D27A" ' + SC + '/>' + winGrid(96, 52, 3, 5, '#FFFCF6') +
+    '<rect x="150" y="76" width="56" height="96" fill="#F2A497" ' + SC + '/>' + winGrid(160, 90, 3, 3, '#FFFCF6') +
+    '<rect x="216" y="54" width="70" height="118" fill="#B9DAA5" ' + SC + '/><polygon points="226,54 251,30 276,54" fill="#D9453D" ' + SC + '/>' + winGrid(228, 70, 4, 4, '#FFFCF6') +
+    '<rect y="170" width="300" height="20" fill="#8E8A86"/><path d="M0 180H300" stroke="#fff" stroke-width="3" stroke-dasharray="14 10"/>') },
+  night: { label: '🌙 夜城・星空小閣樓', svg: scn(
+    '<rect width="300" height="190" fill="#14456A"/><circle cx="246" cy="38" r="17" fill="#F6D27A"/><circle cx="254" cy="32" r="15" fill="#14456A"/>' +
+    '<circle cx="40" cy="30" r="2" fill="#fff"/><circle cx="90" cy="52" r="2" fill="#fff"/><circle cx="150" cy="24" r="2.5" fill="#fff"/><circle cx="200" cy="58" r="2" fill="#fff"/><circle cx="20" cy="70" r="2" fill="#fff"/>' +
+    '<rect x="14" y="76" width="62" height="96" fill="#2B4C6F" ' + SC + '/>' + winGrid(26, 90, 3, 4, '#F6D27A') +
+    '<rect x="86" y="52" width="54" height="120" fill="#34577C" ' + SC + '/>' + winGrid(96, 66, 3, 5, '#F6D27A') +
+    '<rect x="216" y="62" width="70" height="110" fill="#2B4C6F" ' + SC + '/><polygon points="226,62 251,38 276,62" fill="#A9564D" ' + SC + '/>' + winGrid(228, 78, 4, 4, '#F6D27A') +
+    '<rect y="170" width="300" height="20" fill="#1E2F42"/>') },
+  room: { label: '🛋️ 房間・溫馨小窩', svg: scn(
+    '<rect width="300" height="190" fill="#FFF1D6"/><rect y="132" width="300" height="58" fill="#D9B58C"/><path d="M0 132H300" stroke="#3E3A39" stroke-width="2.5"/>' +
+    '<rect x="34" y="26" width="72" height="62" fill="#BFE3F5" ' + SC + '/><path d="M70 26V88M34 57H106" stroke="#3E3A39" stroke-width="2.5"/>' +
+    '<rect x="24" y="22" width="14" height="70" fill="#F2A497" ' + SC + '/><rect x="102" y="22" width="14" height="70" fill="#F2A497" ' + SC + '/>' +
+    '<rect x="190" y="30" width="54" height="40" fill="#B9DAA5" ' + SC + '/><circle cx="217" cy="50" r="9" fill="#F6D27A" ' + SC + '/>' +
+    '<rect x="176" y="96" width="100" height="8" fill="#C89D7C" ' + SC + '/><rect x="188" y="78" width="16" height="18" fill="#A8D3E6" ' + SC + '/><rect x="232" y="82" width="20" height="14" fill="#F2A497" ' + SC + '/>' +
+    '<ellipse cx="150" cy="166" rx="92" ry="15" fill="#F2A497" ' + SC + '/><ellipse cx="248" cy="150" rx="34" ry="13" fill="#F6D27A" ' + SC + '/>') },
+  garden: { label: '🌷 花園・玫瑰小屋', svg: scn(
+    '<rect width="300" height="190" fill="#DFF3FF"/><circle cx="262" cy="34" r="16" fill="#F6D27A" ' + SC + '/><ellipse cx="150" cy="30" rx="28" ry="10" fill="#fff"/>' +
+    '<rect y="118" width="300" height="72" fill="#B9DAA5"/><path d="M0 118H300" stroke="#3E3A39" stroke-width="2.5"/>' +
+    '<rect x="22" y="76" width="72" height="56" fill="#FFF1D6" ' + SC + '/><polygon points="14,78 58,44 102,78" fill="#F2A497" ' + SC + '/><rect x="50" y="100" width="18" height="32" fill="#C89D7C" ' + SC + '/><rect x="74" y="90" width="12" height="12" fill="#BFE3F5" ' + SC + '/>' +
+    [0,1,2,3,4,5,6,7,8,9,10,11,12,13].map(i => '<rect x="' + (i * 22 - 4) + '" y="140" width="12" height="30" fill="#FFFCF6" ' + SC + '/>').join('') +
+    '<path d="M0 150H300" stroke="#3E3A39" stroke-width="2.5"/>' +
+    '<circle cx="120" cy="176" r="6" fill="#F2A497"/><circle cx="170" cy="182" r="6" fill="#F6D27A"/><circle cx="220" cy="176" r="6" fill="#fff" ' + SC + '/><circle cx="260" cy="130" r="6" fill="#F2A497"/>') },
+  snow: { label: '❄️ 冰原・小雪屋', svg: scn(
+    '<rect width="300" height="190" fill="#D8EEF9"/><polygon points="0,124 62,60 124,124" fill="#A8D3E6" ' + SC + '/><polygon points="92,124 170,50 248,124" fill="#8EC0D8" ' + SC + '/>' +
+    '<rect y="120" width="300" height="70" fill="#FFFFFF"/><path d="M0 120H300" stroke="#3E3A39" stroke-width="2.5"/>' +
+    '<path d="M206 156a42 42 0 0 1 84 0Z" fill="#FFFFFF" ' + SC + '/><path d="M214 136H282M222 122H274" stroke="#3E3A39" stroke-width="1.8" fill="none"/><path d="M236 156v-14a11 11 0 0 1 22 0v14Z" fill="#3E3A39"/>' +
+    '<circle cx="40" cy="30" r="3" fill="#fff"/><circle cx="110" cy="40" r="3" fill="#fff"/><circle cx="170" cy="22" r="3" fill="#fff"/><circle cx="250" cy="40" r="3" fill="#fff"/><circle cx="70" cy="80" r="3" fill="#fff"/>') },
+  forest: { label: '🌲 森林・樹屋', svg: scn(
+    '<rect width="300" height="190" fill="#CDE8C0"/><rect y="156" width="300" height="34" fill="#8DB070"/>' +
+    '<rect x="30" y="112" width="12" height="46" fill="#A67C52" ' + SC + '/><circle cx="36" cy="100" r="28" fill="#6DB04F" ' + SC + '/>' +
+    '<rect x="96" y="124" width="10" height="34" fill="#A67C52" ' + SC + '/><circle cx="101" cy="114" r="20" fill="#7FC060" ' + SC + '/>' +
+    '<rect x="228" y="70" width="30" height="90" fill="#A67C52" ' + SC + '/><circle cx="243" cy="56" r="42" fill="#6DB04F" ' + SC + '/>' +
+    '<rect x="210" y="96" width="66" height="8" fill="#C89D7C" ' + SC + '/><rect x="218" y="66" width="50" height="30" fill="#F6D27A" ' + SC + '/><polygon points="212,68 243,46 274,68" fill="#D9453D" ' + SC + '/><rect x="236" y="76" width="14" height="20" fill="#3E3A39"/>') },
+  beach: { label: '🏖️ 海灘・海邊小屋', svg: scn(
+    '<rect width="300" height="190" fill="#BFE3F5"/><circle cx="52" cy="34" r="17" fill="#F6D27A" ' + SC + '/>' +
+    '<rect y="82" width="300" height="46" fill="#6FB8D9"/><path d="M0 100Q20 92 40 100T80 100T120 100T160 100T200 100T240 100T280 100T320 100" stroke="#fff" stroke-width="3" fill="none"/>' +
+    '<rect y="124" width="300" height="66" fill="#F6E2A8"/><path d="M0 124H300" stroke="#3E3A39" stroke-width="2.5"/>' +
+    '<rect x="206" y="100" width="62" height="50" fill="#FFFCF6" ' + SC + '/><rect x="206" y="100" width="21" height="50" fill="#F2A497" ' + SC + '/><rect x="248" y="100" width="20" height="50" fill="#F2A497" ' + SC + '/>' +
+    '<polygon points="198,102 237,72 276,102" fill="#F6D27A" ' + SC + '/><rect x="228" y="124" width="18" height="26" fill="#3E3A39"/>' +
+    '<path d="M36 170 Q44 130 56 96" stroke="#A67C52" stroke-width="7" fill="none" stroke-linecap="round"/><ellipse cx="40" cy="92" rx="26" ry="9" fill="#6DB04F" ' + SC + '/><ellipse cx="68" cy="94" rx="24" ry="8" fill="#7FC060" ' + SC + '/>' +
+    '<circle cx="130" cy="170" r="6" fill="#F2A497" ' + SC + '/><circle cx="170" cy="178" r="5" fill="#fff" ' + SC + '/>') },
+  cloud: { label: '🌈 雲端・彩虹城堡', svg: scn(
+    '<rect width="300" height="190" fill="#E7ECFF"/>' +
+    '<path d="M20 150A110 110 0 0 1 240 150" stroke="#F2A497" stroke-width="10" fill="none"/><path d="M30 150A100 100 0 0 1 230 150" stroke="#F6D27A" stroke-width="10" fill="none"/><path d="M40 150A90 90 0 0 1 220 150" stroke="#B9DAA5" stroke-width="10" fill="none"/><path d="M50 150A80 80 0 0 1 210 150" stroke="#A8D3E6" stroke-width="10" fill="none"/>' +
+    '<rect x="226" y="98" width="54" height="58" fill="#F2A497" ' + SC + '/><rect x="218" y="80" width="18" height="76" fill="#F6D27A" ' + SC + '/><rect x="270" y="80" width="18" height="76" fill="#F6D27A" ' + SC + '/>' +
+    '<polygon points="214,82 227,58 240,82" fill="#A8D3E6" ' + SC + '/><polygon points="266,82 279,58 292,82" fill="#A8D3E6" ' + SC + '/><path d="M241 156v-14a11 11 0 0 1 22 0v14Z" fill="#3E3A39"/>' +
+    '<ellipse cx="60" cy="170" rx="64" ry="22" fill="#fff" ' + SC + '/><ellipse cx="170" cy="176" rx="70" ry="20" fill="#fff" ' + SC + '/><ellipse cx="270" cy="172" rx="50" ry="20" fill="#fff" ' + SC + '/>' +
+    '<circle cx="40" cy="36" r="3" fill="#F6D27A"/><circle cx="150" cy="24" r="3" fill="#F6D27A"/><circle cx="258" cy="40" r="3" fill="#F6D27A"/>') },
+  nest: { label: '🧺 暖呼呼的小窩', svg: scn(
+    '<rect width="300" height="190" fill="#FFF4D6"/><ellipse cx="150" cy="158" rx="112" ry="28" fill="#E8C77A" ' + SC + '/>' +
+    '<path d="M60 156Q90 148 120 158M130 150Q160 142 190 154M200 160Q220 150 244 158" stroke="#3E3A39" stroke-width="2" fill="none"/>' +
+    '<circle cx="46" cy="40" r="3" fill="#F6D27A"/><circle cx="250" cy="52" r="3" fill="#F6D27A"/><circle cx="150" cy="26" r="3" fill="#F2A497"/>') }
+};
+const SPECIES_HABITAT = { shiba:'meadow', cat:'city', rabbit:'garden', penguin:'snow', hamster:'room', fox:'forest', owl:'night', turtle:'beach', dragon:'cloud', unicorn:'cloud' };
+function habitatOf(pet){
+  if (!pet || pet.stage !== 'pet') return HABITATS.nest;
+  return HABITATS[SPECIES_HABITAT[pet.speciesId]] || HABITATS.meadow;
+}
+/* 寵物空間：背景小屋＋寵物＋買來的配件（擺在地上，可點擊穿戴／卸下）＋點心盤 */
+function renderPetRoom(pet, ownerSeat, slotIdx, avatarHtml){
+  const hatched = pet && pet.stage === 'pet';
+  const hab = habitatOf(pet);
+  let items = '', snacks = '';
+  if (hatched) {
+    const owned = Array.isArray(pet.accessories) ? pet.accessories : [];
+    const eq = pet.equippedAcc || '';
+    items = owned.length
+      ? owned.map(ic => '<button type="button" class="room-item'+(ic===eq?' on':'')+'" title="'+(ic===eq?'點一下卸下':'點一下幫牠戴上')+'" data-pequip="'+ic+'" data-owner="'+ownerSeat+'" data-slot="'+slotIdx+'">'+accIc(ic,'inl')+(ic===eq?'<small>穿戴中</small>':'')+'</button>').join('')
+      : '<span class="room-hint">買到的配件會擺在這裡</span>';
+    const sn = pet.snacks || {};
+    snacks = [['snack_cake','🍰'],['snack_star','🍭']].filter(x => Number(sn[x[0]]) > 0).map(x => '<span class="room-snack">'+x[1]+'×'+Number(sn[x[0]])+'</span>').join('');
+  }
+  return '<div class="pet-room">'+hab.svg+'<span class="room-tag">'+hab.label+'</span>'+
+    (snacks ? '<div class="room-snacks">'+snacks+'</div>' : '')+avatarHtml+
+    (hatched ? '<div class="room-items">'+items+'</div>' : '')+'</div>';
+}
+
 // 根據照顧次數計算寵物進階表現階段（12次覺醒、25次守護神）
 function getPetStageInfo(cares){
   const c = Number(cares || 1);
@@ -2339,7 +2434,12 @@ function getPetSlots(seat){
   return [];
 }
 
-function openPetPark(defaultSeat){
+async function loadPets(){
+  if (S.sandbox || !S.board) return;
+  const p = await fbGet('pets');
+  S.board.pets = p || {};
+}
+async function openPetPark(defaultSeat){
   const b = S.board;
   if (!b || !b.students || !b.students.length) {
     toast('尚未設定班級名單');
@@ -2354,8 +2454,10 @@ function openPetPark(defaultSeat){
     '<option value="'+s.seat+'"'+(s.seat===PetUI.actorSeat?' selected':'')+'>我是：'+s.seat+' 號 '+esc(s.name)+'</option>'
   ).join('');
   $('#petEventBox').innerHTML = '';
-  renderPetPark();
+  $('#petBody').innerHTML = '<div class="note" style="text-align:center">🐾 載入寵物中…</div>';
   $('#petOv').classList.add('show');
+  try { await loadPets(); } catch(e) { handleErr(e); }
+  renderPetPark();
 }
 
 function renderPetPark(){
@@ -2415,10 +2517,10 @@ function renderPetPark(){
       } else {
         const mem = (p.memories && p.memories[actor]) ? p.memories[actor].total : 0;
         const dis = (!myHasHatched || myPts < 1) ? ' disabled' : '';
-        const wearHtml = p.equippedAcc ? '<span class="street-acc-wear '+getAccPosClass(p.equippedAcc)+'">'+p.equippedAcc+'</span>' : '';
+        const wearHtml = p.equippedAcc ? '<span class="street-acc-wear '+getAccPosClass(p.equippedAcc)+'">'+accIc(p.equippedAcc,'wear')+'</span>' : '';
         h += '<div class="street-item">'+
           '<div class="street-who">'+s.seat+' 號 '+esc(s.name)+'</div>'+
-          '<div class="street-ic" style="position:relative;display:inline-block">'+p.icon+wearHtml+'</div>'+
+          '<div class="street-room">'+habitatOf(p).svg+'<div class="street-av">'+p.icon+wearHtml+'</div></div>'+
           '<div class="street-pet">'+esc(p.speciesName)+(mem?' · 友好度 '+mem:'')+'</div>'+
           '<div class="street-btns">'+
             '<button type="button" data-pact="feed" data-owner="'+s.seat+'" data-slot="0"'+dis+'>🍎 餵食</button>'+
@@ -2446,7 +2548,7 @@ function renderPetShop(actor, mySlots, myPts){
   const targetPet = mySlots[PetUI.shopSlot];
   const ownedAcc = Array.isArray(targetPet.accessories) ? targetPet.accessories : [];
   const eqAcc = targetPet.equippedAcc || '';
-  const wearHtml = eqAcc ? '<span class="pet-acc-wear '+getAccPosClass(eqAcc)+'">'+eqAcc+'</span>' : '';
+  const wearHtml = eqAcc ? '<span class="pet-acc-wear '+getAccPosClass(eqAcc)+'">'+accIc(eqAcc,'wear')+'</span>' : '';
 
   const SHOP_CATALOG = [
     { id:'acc_crown',   type:'acc',   icon:'👑', name:'閃亮小皇冠',     cost:8,  desc:'戴在頭上超威風！寵物街也看得到' },
@@ -2468,7 +2570,7 @@ function renderPetShop(actor, mySlots, myPts){
     '</div>'+
     '<div style="display:flex;align-items:center;gap:8px;background:#FFF;padding:4px 12px;border:2px solid var(--ink);border-radius:14px">'+
       '<div style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;font-size:34px">'+targetPet.icon+wearHtml+'</div>'+
-      '<span style="font-size:14px;font-weight:700">'+(eqAcc ? '目前穿戴：'+eqAcc : '尚未穿戴配件')+'</span>'+
+      '<span style="font-size:14px;font-weight:700">'+(eqAcc ? '目前穿戴：'+accIc(eqAcc,'inl') : '尚未穿戴配件')+'</span>'+
     '</div>'+
   '</div>';
 
@@ -2479,11 +2581,11 @@ function renderPetShop(actor, mySlots, myPts){
     const canBuy = !alreadyOwned && myPts >= it.cost;
     h += '<div class="shop-card">'+
       '<span class="shop-tag'+(it.type==='snack'?' snack':'')+'">'+(it.type==='acc'?'專屬配件':'高級點心')+'</span>'+
-      '<div class="shop-ic">'+it.icon+'</div>'+
+      '<div class="shop-ic">'+accIc(it.icon,'shop')+'</div>'+
       '<div class="shop-name">'+esc(it.name)+'</div>'+
       '<div class="shop-desc">'+esc(it.desc)+'</div>';
     if (alreadyOwned) {
-      h += '<button type="button" class="btn sm '+(isEquipped?'yellow':'sky')+'" data-pequip="'+it.icon+'" data-owner="'+actor+'" data-slot="'+PetUI.shopSlot+'">'+(isEquipped?'✨ 穿戴中（點我卸下）':'👕 幫牠戴上 '+it.icon)+'</button>';
+      h += '<button type="button" class="btn sm '+(isEquipped?'yellow':'sky')+'" data-pequip="'+it.icon+'" data-owner="'+actor+'" data-slot="'+PetUI.shopSlot+'">'+(isEquipped?'✨ 穿戴中（點我卸下）':'👕 幫牠戴上 '+accIc(it.icon,'inl'))+'</button>';
     } else {
       h += '<button type="button" class="btn sm '+(canBuy?'green':'')+'" data-pact="'+it.id+'" data-owner="'+actor+'" data-slot="'+PetUI.shopSlot+'"'+(canBuy?'':' disabled')+'>'+
         (canBuy ? '⭐ 花 '+it.cost+' 顆星星購買' : '還差 '+(it.cost - myPts)+' 顆星星')+'</button>';
@@ -2522,7 +2624,7 @@ function renderSlotCard(ownerSeat, slotIdx, pet, myPts, canUnlock){
     const dis = myPts < 1 ? ' disabled' : '';
     return '<div class="pet-card">'+
       '<span class="pet-stage-tag">第 '+(slotIdx+1)+' 格 · 孵化中</span>'+
-      '<div class="pet-avatar egg">'+(pet.eggIcon||'🥚')+'</div>'+
+      renderPetRoom(null, ownerSeat, slotIdx, '<div class="pet-avatar-wrap"><div class="pet-avatar egg">'+(pet.eggIcon||'🥚')+'</div></div>')+
       '<div class="pet-name">盲盒神祕蛋（'+g+' / '+maxG+'）</div>'+
       '<div class="pet-prog-wrap"><div class="pet-prog-bar" style="width:'+pct+'%"></div></div>'+
       '<div class="pet-speech">'+esc(pet.lastSpeech || '用星星照顧我，我就會破殼出生喔！')+'</div>'+
@@ -2539,7 +2641,7 @@ function renderSlotCard(ownerSeat, slotIdx, pet, myPts, canUnlock){
   const dis = myPts < 1 ? ' disabled' : '';
   const ownedAcc = Array.isArray(pet.accessories) ? pet.accessories : [];
   const eqAcc = pet.equippedAcc || '';
-  const wearHtml = eqAcc ? '<span class="pet-acc-wear '+getAccPosClass(eqAcc)+'">'+eqAcc+'</span>' : '';
+  const wearHtml = eqAcc ? '<span class="pet-acc-wear '+getAccPosClass(eqAcc)+'">'+accIc(eqAcc,'wear')+'</span>' : '';
 
   // 互動滿 12 次後，解鎖專屬進階互動按鈕「✨ 才藝秀」
   const actionButtonsHtml = cares >= 12
@@ -2553,10 +2655,9 @@ function renderSlotCard(ownerSeat, slotIdx, pet, myPts, canUnlock){
   return '<div class="pet-card">'+
     '<span class="pet-stage-tag">'+stInfo.badge+'</span>'+
     '<span class="pet-rarity">'+(pet.rarity||'可愛')+'</span>'+
-    '<div class="pet-avatar-wrap '+stInfo.lvClass+'"><div class="pet-avatar">'+pet.icon+'</div>'+wearHtml+'</div>'+
+    renderPetRoom(pet, ownerSeat, slotIdx, '<div class="pet-avatar-wrap '+stInfo.lvClass+'"><div class="pet-avatar">'+pet.icon+'</div>'+wearHtml+'</div>')+
     '<div class="pet-name">'+esc(pet.speciesName)+' <small style="font-size:14px;opacity:.75">(互動 '+cares+' 次)</small></div>'+
     '<div class="pet-badge-row"><span class="pet-talent-tag">'+stInfo.talent+'</span></div>'+
-    '<div class="pet-acc-list">'+(ownedAcc.length ? ownedAcc.map(ic => '<button type="button" title="點擊穿戴或卸下" data-pequip="'+ic+'" data-owner="'+ownerSeat+'" data-slot="'+slotIdx+'" style="border:2px solid var(--ink);border-radius:10px;padding:2px 8px;font-weight:700;background:'+(ic===eqAcc?'var(--yellow)':'#FFF')+'">'+ic+(ic===eqAcc?' 穿戴中':' 換上')+'</button>').join('') : '<span style="font-size:13px;opacity:.65">尚無配件（點上方「配件點心屋」幫牠打扮！）</span>')+'</div>'+
     '<div class="pet-speech">'+esc(pet.lastSpeech || '主人好！今天想跟我怎麼玩呢？')+'</div>'+
     '<div class="pet-acts">'+actionButtonsHtml+'</div>'+
     '<div style="font-size:12px;opacity:.7;margin-top:6px">'+stInfo.nextTip+'</div>'+
@@ -2564,6 +2665,10 @@ function renderSlotCard(ownerSeat, slotIdx, pet, myPts, canUnlock){
 }
 
 $('#petBtn').addEventListener('click', ()=>openPetPark());
+setInterval(async ()=>{
+  if (document.hidden || PetUI.busy || S.sandbox || !$('#petOv').classList.contains('show')) return;
+  try { await loadPets(); if (!PetUI.busy) renderPetPark(); } catch(e){}
+}, 15000);
 $('#petClose').addEventListener('click', ()=>{ if (!PetUI.busy) $('#petOv').classList.remove('show'); });
 $('#petActorSel').addEventListener('change', ev=>{
   PetUI.actorSeat = Number(ev.target.value);
@@ -2661,7 +2766,10 @@ $('#petBody').addEventListener('click', async ev=>{
         bannerHtml += '<div class="event-banner" style="background:#EBF6FC"><h4>🌟 寵物階段進化覺醒！</h4><p>你的小寵物互動累積滿 <b>'+res.evolvedNow.cares+' 次</b>，正式進階為「<b>'+res.evolvedNow.title+'</b>」，解鎖更強尋寶與才藝表現！</p></div>';
       }
       if (res.shopPurchased) {
-        bannerHtml += '<div class="event-banner"><h4>🛍️ 購買成功！</h4><p>獲得了 <b>'+res.shopPurchased.icon+' '+esc(res.shopPurchased.name)+'</b>！'+(res.shopPurchased.type==='acc'?'已自動幫小寵物穿戴在身上囉！':'')+'</p></div>';
+        bannerHtml += '<div class="event-banner"><h4>🛍️ 購買成功！</h4><p>獲得了 <b>'+accIc(res.shopPurchased.icon,'inl')+' '+esc(res.shopPurchased.name)+'</b>！'+(res.shopPurchased.type==='acc'?'已放進你的寵物空間，並幫小寵物戴上囉！到「我的寵物」就能看到～':'點心已放進寵物空間的點心盤！')+'</p></div>';
+      }
+      if (res.rewardCapped) {
+        bannerHtml += '<div class="event-banner" style="background:#EBF6FC"><h4>🌙 今天的寵物回禮已達上限</h4><p>小寵物今天累了，明天再來找牠玩，會有新的驚喜！</p></div>';
       }
       if (res.eventCard) {
         let rewardBadge = '';
@@ -3125,6 +3233,20 @@ async function backToFront(){
   fetchBoard(true).then(()=>fitVertical());
 }
 $('#adBack').addEventListener('click', backToFront);
+$('#adExport').addEventListener('click', async ()=>{
+  if (S.sandbox) { toast('沙盒模式下無法匯出，請先離開沙盒'); return; }
+  try {
+    toast('備份下載中…');
+    const data = await fbGetAll();
+    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), boardData: data }, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'class-board-backup-' + getTodayTaipei() + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast('✅ 已匯出備份檔');
+  } catch(e) { handleErr(e); }
+});
 $('#adSync').addEventListener('click', async ()=>{
   await flushStatusBuffer();
   await saveAllDirty();
@@ -3160,7 +3282,6 @@ function renderAdmin(){
   else if (S.tab === 'register') { body.innerHTML = '<div id="regTop"></div><div id="regSeats"></div>'; renderRegTop(); renderRegSeats(); }
   else if (S.tab === 'track') body.innerHTML = viewTrack();
   else if (S.tab === 'points') body.innerHTML = viewPoints();
-  else if (S.tab === 'theme') body.innerHTML = viewTheme();
   else body.innerHTML = viewRoster();
 }
 
@@ -3402,32 +3523,6 @@ function viewPoints(){
 }
 
 /* ---------- 分頁五：班級名單設定（直接存 Firebase，免用試算表） ---------- */
-const THEMES = [
-  { id:'doodle', name:'可愛手繪插圖', desc:'粗框線、馬卡龍色塊、插畫小圖示（預設）', bg:'#FFFCF6', panel:'#FFFEFA', bar:'#A8D3E6', ink:'#3E3A39', dots:['#F2A497','#F6D27A','#B9DAA5'], radius:14, bw:3 },
-  { id:'chalk',  name:'傳統黑板',     desc:'墨綠黑板、木頭邊框、粉筆白字', bg:'#4B3526', panel:'#2F4B3F', bar:'#3F6F7D', ink:'#F3F0E6', frame:'#A87B52', dots:['#E0685D','#E8D26A','#9BE07A'], radius:6, bw:5 },
-  { id:'muji',   name:'日式無印',     desc:'米白底、極細線條、低彩度自然色', bg:'#F6F4EF', panel:'#FFFFFF', bar:'#D7DFE2', ink:'#3B3A37', dots:['#B5524A','#E8DEC8','#7E9C6E'], radius:4, bw:1 }
-];
-function viewTheme(){
-  const cur = (S.board && S.board.theme) || 'doodle';
-  let h = '<section class="card"><h3>🎨 教室大螢幕版面模式</h3>'+
-    '<div class="note">選一種風格，教室大螢幕會在幾秒內自動換上（設定存在 Firebase，所有裝置同步）。後台與各種彈窗（抽獎、寵物樂園）維持手繪風，確保好讀。</div>'+
-    '<div class="themes">';
-  THEMES.forEach(t => {
-    const on = t.id === cur, bw2 = Math.min(t.bw, 2);
-    h += '<button type="button" class="themecard'+(on?' on':'')+'" data-act="theme" data-t="'+t.id+'">'+
-      '<div style="background:'+t.bg+';padding:12px;border-radius:10px;border:2px solid rgba(0,0,0,.12);margin-bottom:10px">'+
-        '<div style="background:'+t.panel+';border:'+t.bw+'px solid '+(t.frame||t.ink)+';border-radius:'+t.radius+'px;overflow:hidden">'+
-          '<div style="background:'+t.bar+';height:22px;border-bottom:'+bw2+'px solid '+t.ink+'"></div>'+
-          '<div style="padding:8px;display:flex;gap:6px;align-items:center">'+
-            t.dots.map(c => '<span style="width:18px;height:18px;border-radius:'+(t.id==='muji'?'3px':'28%')+';background:'+c+';border:'+bw2+'px solid '+t.ink+'"></span>').join('')+
-            '<span style="flex:1;height:6px;border-radius:3px;background:'+t.ink+';opacity:.35"></span>'+
-          '</div></div></div>'+
-      '<b style="font-size:21px">'+t.name+'</b>'+(on?' <span class="chip">使用中 ✓</span>':'')+
-      '<div class="sub">'+t.desc+'</div></button>';
-  });
-  return h + '</div></section>';
-}
-
 function viewRoster(){
   const stus = (S.board && S.board.students) || [];
   const lines = stus.map(s => s.seat + ' ' + s.name).join('\n');
@@ -3469,18 +3564,6 @@ adBody.addEventListener('click', async ev=>{
   const act = btn.dataset.act;
   const card = btn.closest('.card');
   const day = card && card.dataset.day;
-
-  if (act === 'theme') {
-    const t = btn.dataset.t, meta = THEMES.find(x => x.id === t);
-    try {
-      await gs('saveTheme', t);
-      applyTheme(t); if (S.board) S.board.theme = t;
-      S.writeSeq++; S.lastJson = '';
-      renderAdmin();
-      toast('已切換版面：' + (meta ? meta.name : t));
-    } catch(e){ handleErr(e); }
-    return;
-  }
 
   if (act === 'saveRoster') {
     const raw = ($('#rosterTxt').value || '').trim();
